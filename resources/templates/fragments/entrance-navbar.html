@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title th:text=#{title.entrance}></title>
+<link rel="stylesheet" href="./css/global.css">
+<link rel="stylesheet" href="./css/entrance.css">
+<link rel="stylesheet" href="./webjars/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body th:fragment="enav">
+<nav class="navbar navbar-icon-top navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">Paymetv</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">
+          <i class="fa fa-home"></i>
+          Home
+          <span class="sr-only">(current)</span>
+          </a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="#">
+          <i class="fa fa-home"></i>
+          Intro
+          <span class="sr-only">(current)</span>
+          </a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="#">
+          <i class="fa fa-home"></i>
+          Features
+          <span class="sr-only">(current)</span>
+          </a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="#">
+          <i class="fa fa-home"></i>
+          Contact
+          <span class="sr-only">(current)</span>
+          </a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="#">
+          <i class="fa fa-home"></i>
+          About
+          <span class="sr-only">(current)</span>
+          </a>
+      </li>
+      <div class="nav-item dropdown right">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fa fa-envelope-o">
+            <span class="badge badge-primary">11</span>
+          </i>
+          Login
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+  </div>
+    </ul>
+  </div>
+</nav>
+
+<!-- 
+<nav id="topNav" class="navbar navbar-icon-top navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="#first"><i><embed type="image/svg+xml" src="<%out.print(basePath); %>images/system/tvlogo-whiteout2.svg" alt="Paymetv" style="width:30px;height:30px; margin-top:-14px;" /></i> Paymetv</a>
+            </div>
+            <div class="navbar-collapse collapse" id="bs-navbar">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a class="page-scroll" href="#one">Intro</a>
+                        <span class="sr-only">(current)</span>
+                    </li>     
+                    <li>
+                        <a class="page-scroll" href="#four">Features</a>
+                        <span class="sr-only">(current)</span>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#last">Contact</a>
+                        <span class="sr-only">(current)</span>
+                    </li>
+                    <li>
+                        <a class="page-scroll" data-toggle="modal" title="A free Bootstrap video landing theme" href="#aboutModal">About</a>
+                        <span class="sr-only">(current)</span>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                    	<!-- Example split danger button --
+                    	</br>
+						<div class="btn-group">
+						  <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						    <font style="color:#b60ae8;"><span th:text=#{label.language}></span></font>
+						  </button>
+						  <div class="dropdown-menu">
+						    <a class="dropdown-item" href="entrance?lang=en"><span th:text=#{label.language.english}></span> <img src="./images/system/ukFlag.png" width="20" height="12" align="right" /> </a> </br>
+						    <a class="dropdown-item" href="entrance?lang=fr"><span th:text=#{label.language.french}></span> <img src="./images/system/frflag.png" width="20" height="12" align="right" /> </a>  </br>
+						    <a class="dropdown-item" href="entrance?lang=de"><span th:text=#{label.language.german}></span> <img src="./images/system/drflag.png" width="20" height="12" align="right" />  </a>  </br>
+						    <a class="dropdown-item" href="entrance?lang=it"><span th:text=#{label.language.italian}></span> <img src="./images/system/itflag.png" width="20" height="12" align="right" />  </a>  </br>
+						    <a class="dropdown-item" href="entrance?lang=es"><span th:text=#{label.language.spanish}></span> <img src="./images/system/spFlag.png" width="20" height="12" align="right" />  </a>  </br>
+						    <div class="dropdown-divider"></div>
+						  </div>
+						</div>
+						</br>
+						<div id="infoTXT">
+						<a href="homePage2"> <span th:text=#{label.signin}></span></a>&nbsp;
+    							<span th:text=#{label.or}></span>&nbsp;
+    					<a href="<%out.print(basePath); %>managesignup"><span th:text=#{label.register}></span> </a> &nbsp;&nbsp;&nbsp;
+    					</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+   -->
+
+
+</body>
+</html>

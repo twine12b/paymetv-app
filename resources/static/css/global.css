@@ -1,0 +1,45 @@
+@font-face {
+	src: url(fonts/PoiretOne-Regular.ttf);
+	font-family: PoiretOne;
+}
+
+@font-face {
+	src: url(fonts/Ruluko-Regular.ttf);
+	font-family: Ruluko;
+}
+/* ==========================================================================
+PMTV tweaks
+========================================================================== */
+
+#background {
+    background: #ffffff;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 90%;
+    width: auto;
+    height: auto;
+    z-index: -90;
+    -webkit-transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%) translateY(-50%);
+    /* background: url(polina.jpg) no-repeat; */
+    background-size: cover;
+    }
+
+    .vertical-center {
+        min-height: 83%;  /* Fallback for browsers do NOT support vh unit */
+        min-height: 83vh; /* These two lines are counted as one :-)       */
+
+        display: flex;
+        align-items: center;
+   }
+
+   .logo {
+       margin-top: 0em;
+   }
+
+   .splashFontColor {
+       color: #fff;
+	   font-family: PoiretOne;
+   }

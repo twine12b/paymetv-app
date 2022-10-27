@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title th:text=#{splashscreen.title}></title>
+<link rel="stylesheet" href="./css/global.css">
+<link rel="stylesheet" href="./webjars/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<!--The content below is only a placeholder and can be replaced.-->
+<div class="container-fluid vertical-center" align="center">
+    <div class="container-fluid splashFontColor">
+        <video autoplay loop playsinline preload muted id="background" class="img-fluid">
+            <source src="./video/system/backvideo2.mp4" type="video/mp4">Your browser does not support the video tag. I suggest you upgrade your browser.
+        </video>
+
+        <div class="row">
+            <div class="container">
+                <img src="./images/system/tvlogo-whiteout2.svg" alt="Paymetv" class="col-6 img-fluid"><br />
+
+                <h2 style="font-size:1.8vw;" th:text="#{label.slogan}">The fast track way to get paid for your videos</h2>
+
+                <h1 style="font-size:4.0vw; margin-top:.5em"><span th:text="#{label.comingsoon}">COMING SOON!!!.. </span></h1>
+
+
+                <div style="font-size:.75vw; margin-top:2em" class="container-fluid" align="center">
+                    <div th:text="#{label.copyright1}">Copyright &copy; 2017 PayMeTV enterprises.</div> <div th:text="#{label.copyright2}">All rights reserved.  Use of this website signifies your agreement to the Terms of Use and Online Privacy Policy (updated 13-11-2017).</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+<!-- 
+    <span th:text="#{lang.change}"></span>:
+	<select id="locales">
+	    <option value=""></option>
+	    <option value="en" th:text="#{lang.eng}"></option>
+	    <option value="fr" th:text="#{lang.fr}"></option>
+	    <option value="de" th:text="#{lang.de}"></option>
+	    <option value="it" th:text="#{lang.it}"></option>
+	    <option value="es" th:text="#{lang.sp}"></option>
+	</select>
+ -->
+    
+</div>
+
+<!-- Script -->
+<script src="./webjars/jquery/3.3.1-1/jquery.min.js"></script>
+<script src="./webjars/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#locales").change(function () {
+        var selectedOption = $('#locales').val();
+        if (selectedOption != ''){
+            window.location.replace('?lang=' + selectedOption);
+        }
+    });
+});
+</script>
+
+
+</body>
+</html>

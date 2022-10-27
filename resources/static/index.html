@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+<link rel="stylesheet" href="./css/global.css">
+<link rel="stylesheet" href="./webjars/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+<!--The content below is only a placeholder and can be replaced.-->
+<div class="container-fluid vertical-center" align="center">
+
+<h1><spring:message code="label.signin" text="default"/></h1>
+<h1 th:text="#{greeting}"></h1>
+
+
+    <div class="container-fluid splashFontColor">
+        <video autoplay loop playsinline preload muted id="background" class="img-fluid">
+            <source src="./video/system/backvideo2.mp4" type="video/mp4">Your browser does not support the video tag. I suggest you upgrade your browser.
+        </video>
+
+        <div class="row">
+            <div class="container">
+                <img src="./images/system/tvlogo-whiteout2.svg" alt="Paymetv" class="col-6 img-fluid"><br />
+
+                <h2 style="font-size:1.8vw;" [translate]="'splashscreen.slogan'">The fast track way to get paid for your videos</h2>
+
+                <h1 style="font-size:4.0vw; margin-top:.5em"><span jhiTranslate="splashscreen.text">COMING SOON!!!.. </span></h1>
+
+
+                <div style="font-size:.75vw; margin-top:2em" class="container-fluid" align="center">
+                    <div [translate]="'splashscreen.copy1'">Copyright &copy; 2017 PayMeTV enterprises.</div> <div [translate]="'splashscreen.copy2'">All rights reserved.  Use of this website signifies your agreement to the Terms of Use and Online Privacy Policy (updated 13-11-2017).</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!--  Test ONLY -->
+<button (click)="useLanguage('en')">en</button>
+<button (click)="useLanguage('de')">de</button>
+<button (click)="useLanguage('fr')">fr</button>
+<button (click)="useLanguage('es')">es</button>
+<button (click)="useLanguage('it')">it</button>
+
+<!-- Script -->
+<script src="./webjars/bootstrap/3.3.1/dist/bootstrap.min.js"></script>
+
+
+</body>
+</html>
