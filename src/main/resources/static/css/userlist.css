@@ -1,0 +1,8 @@
+body,input{font-family:Calibri,Arial;margin:0px;padding:0px}
+a{text-decoration: none; color:#7c09d7; font-size:.85em;}
+a:visited{color:#0254eb}
+#header h2{color:#fff;background-color:#00a1e6;margin:0px;padding:5px}
+.comment{width:auto;background-color:#f0f0f0;margin:10px; font-size:.75em; margin-top:-.5px;}
+a.morelink{text-decoration:none;outline:none; color:#7c09d7;}
+.morecontent span{display:none}
+h1 {font-size: 1.1em;}

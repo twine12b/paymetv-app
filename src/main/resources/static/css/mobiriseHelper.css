@@ -1,0 +1,76 @@
+@CHARSET "UTF-8";
+ .body_synopsys{
+   		position: absolute;
+    	top: 0;
+ 	float: left;
+ 	padding: 2.5%;
+ 	opacity:1; 
+ 	background-color:#000000; 
+ 	 	  z-index:100;
+ 	      overlow-y: auto;
+ 	display:none;
+ 	}
+ 	.hideIt{
+ 	  display:none;
+ 	}
+ 	.showIt{
+ 	  display: block;
+  	}
+  	
+  	input[type=text]:after { content : url("magnifying-glass.gif"); }
+  	
+  	.style-1 input[type="search"] {
+  padding: 10px;
+  border: solid 1px #dcdcdc;
+  transition: box-shadow 0.3s, border 0.3s;
+}
+.style-1 input[type="search"]:focus,
+.style-1 input[type="search"].focus {
+  border: solid 1px #707070;
+  box-shadow: 0 0 5px 1px #969696;
+}
+#information-bar{
+	padding-left:10px;
+	padding-top:8px;
+	padding-bottom:-8px;
+}
+.video-wrapper{
+	position:fixed;
+}
+.video-wrapper:before{
+	content:"poo";
+	 position: fixed;
+ 
+ overflow: hidden;
+ max-width: 100%;
+ 
+	background:url('images/system/hirez_tvlogo2.png');
+	background-size:cover;
+	width:10%;
+	height:8%;
+	right:2.5%;
+	top:1.5%;
+	opacity: .75;
+}
+.video-button{
+	position:fixed;
+}
+.video-button:before {
+	content:"";
+	 position: fixed;
+	background:url('images/system/Play-Button-PNG-Picture.png');
+	background-size:cover;
+	width:100px;
+	height:100px;
+	left:45%;
+	bottom:41%;
+	background-repeat: no-repeat;
+	background-image: linear-gradient(to right, black 0%,white 100%), url('images/system/Play-Button-PNG-Picture.png');
+	background-blend-mode:luminosity;
+ 
+	opacity: .75;
+}
+.video-button:active .video-button:hover{
+opacity: 1;
+	background-color:green;
+}

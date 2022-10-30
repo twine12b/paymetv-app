@@ -1,0 +1,30 @@
+/* Specific styling for login.jsp */
+#contentwrapper{clear:both;float:right;margin:2% 10% 10% auto;width:310px;min-width:300px;}
+#content{margin-bottom:10px;}
+#content h1{*height:20px;}
+.line {margin:0 0 10px 0;padding:0;height:0;border-bottom: 1px #999 solid;}
+.spacer{margin-top:30px;}
+input[type="text"]{padding:3px 1px; width:210px;}
+input[type="password"]{padding:3px 1px;width:210px;}
+.error{color:#f00;background-color:transparent;margin:0;padding:0;*margin-top:4px;}
+
+
+
+body{
+	background-image: url("../images/system/pmtv_devices.png");
+	background-repeat: no-repeat; 
+	background-size:contain; 
+	background-attachment: fixed;
+	background-position: 15% 62%; 
+	background-size: 50%;
+}
+
+a{
+	color:#a941fe;
+}
+a:hover{
+	color:#7a08d6;
+}
+a:active{
+	color:grey;
+}
