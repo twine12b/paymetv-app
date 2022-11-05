@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: pmtv-application
+  name: paymetv-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pmtv-application
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pmtv-application
+    spec:
+      containers:
+        - image: paymetv-app:latest
+          name: paymetv-app
+          ports:
+            - containerPort: 8080
+  
