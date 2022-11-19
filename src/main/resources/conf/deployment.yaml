@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/name: pmtv-application
+    app.kubernetes.io/name: paymetv-app
   name: paymetv-app
 spec:
   replicas: 3
