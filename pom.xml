@@ -55,6 +55,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>paymetv-0.0.1-SNAPSHOT</finalName>
 	</build>
 
 </project>
