@@ -14,9 +14,7 @@
 	<name>paymetv-app</name>
 	<description>Paymetvproject for Spring Boot</description>
 	<properties>
-		<java.version>17</java.version>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<java.version>1.8</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
