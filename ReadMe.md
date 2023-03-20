@@ -1,3 +1,4 @@
+[![Build Status](http://www.paymetv.co.uk:8080/buildStatus/icon?job=paymetv-pipeline)](http://www.paymetv.co.uk:8080/job/paymetv-pipeline/)
 ##Paymetv limited
 ###The fast track way to get paid for your videos
 
