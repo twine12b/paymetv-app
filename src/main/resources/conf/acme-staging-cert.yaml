@@ -1,0 +1,11 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pmtv-acme-http-stag-cert
+spec:
+  dnsNames:
+    - paymetv.co.uk
+  secretName: pmtv-acme-http-stag-sec
+  issuerRef:
+    name: pmtv-acme-http-stag
+    kind: ClusterIssuer
