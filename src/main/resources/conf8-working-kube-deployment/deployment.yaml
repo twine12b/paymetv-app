@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymetv-app-deployment
+  labels:
+    app: paymetv-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: paymetv-app
+  template:
+    metadata:
+      labels:
+        app: paymetv-app
+    spec:
+      containers:
+        - name: paymetv-app
+          image: paymetv/paymetv-app:latest # Replace with your actual Docker image
+          ports:
+            - containerPort: 80
