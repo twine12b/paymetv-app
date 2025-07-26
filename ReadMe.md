@@ -31,3 +31,11 @@ https://platform9.com/learn/v1.0/tutorials/nginix-controller-via-yaml
 Kubernetes SSL with cert-manager
 https://youtu.be/MRhEWpkd5Ig?si=GLmRAPDKjZbyv1Zv
 https://github.com/gurlal-1/devops-avenue/tree/main/yt-videos/kind-cert-manager
+
+## Useful Commands
+```commandline
+kubectl logs ingress-nginx-controller-748d997b68-bxjds
+kubectl edit ingress paymetv-app-ingress
+kubectl describe cert pmtv-acme-http-stag-cert 
+kubectl get pods -A
+```

@@ -1,2 +1,9 @@
 # Project exclude paths
 /target/
+
+.idea/AugmentWebviewStateStore.xml
+.idea/aws.xml
+.idea/material_theme_project_new.xml
+.idea/misc.xml
+.idea/compiler.xml
+
