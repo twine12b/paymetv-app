@@ -107,9 +107,9 @@ RUN echo '#!/bin/bash' > /usr/local/bin/mine-eth.sh && \
     echo './nbminer -a ethash -o stratum+tcp://daggerhashimoto.auto.nicehash.com:9200 -u $WALLET_ADDRESS.$WORKER_NAME' >> /usr/local/bin/mine-eth.sh && \
     chmod +x /usr/local/bin/mine-eth.sh
 
-#RUN mkdir -p /nicehash
-#COPY --chown=1000:1000 NHOS-Flash-Tool-1.1.2.deb /NHOS-Flash-Tool-1.1.2.deb
 COPY --chown=1000:1000 address-cyphered.yml /address-cyphered.yml
+COPY --chown=1000:1000 start-mining.sh /start-mining.sh
+
 
 # Create startup script that initializes GPU
 RUN echo '#!/bin/bash' > /usr/local/bin/startup.sh && \
@@ -121,30 +121,7 @@ RUN echo '#!/bin/bash' > /usr/local/bin/startup.sh && \
 EXPOSE 8084
 
 # Use startup script as entrypoint
-ENTRYPOINT ["/usr/local/bin/startup.sh"]
+ENTRYPOINT ["/start-mining.sh"]
 
 # Default command - you can override this when running
 CMD ["bash"]
-
-
-
-#RUN apt install nvidia-driver-535 nvidia-cuda-toolkit -y
-#RUN apt-get update && apt-get install -y libqt5svg5
-
-# Install the .deb package and fix dependencies
-#RUN dpkg -i NHOS-Flash-Tool-1.1.2.deb || apt-get install -f -y
-
-# Find and list installed files for debugging
-#RUN dpkg -L nhos-flash-tool || echo "Package name might be different"
-
-#WORKDIR /nicehash
-
-## Create a script to run the NiceHash tool
-#RUN echo '#!/bin/bash' > /usr/local/bin/run-nicehash.sh && \
-#    echo 'echo "Initializing GPU first..."' >> /usr/local/bin/run-nicehash.sh && \
-#    echo '/usr/local/bin/init-gpu.sh' >> /usr/local/bin/run-nicehash.sh && \
-#    echo 'echo "Looking for NiceHash Flash Tool..."' >> /usr/local/bin/run-nicehash.sh && \
-#    echo 'find /usr -name "*nicehash*" -o -name "*nhos*" 2>/dev/null' >> /usr/local/bin/run-nicehash.sh && \
-#    echo 'echo "Available commands:"' >> /usr/local/bin/run-nicehash.sh && \
-#    echo 'ls /usr/bin/ | grep -i nice || echo "No nicehash commands found in /usr/bin"' >> /usr/local/bin/run-nicehash.sh && \
-#    chmod +x /usr/local/bin/run-nicehash.sh
