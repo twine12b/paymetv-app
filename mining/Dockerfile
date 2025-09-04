@@ -121,6 +121,7 @@ RUN echo '#!/bin/bash' > /usr/local/bin/startup.sh && \
 EXPOSE 8084
 
 # Use startup script as entrypoint
+RUN chmod +x /start-mining.sh
 ENTRYPOINT ["/start-mining.sh"]
 
 # Default command - you can override this when running
