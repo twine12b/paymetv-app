@@ -36,6 +36,6 @@ https://github.com/gurlal-1/devops-avenue/tree/main/yt-videos/kind-cert-manager
 ```commandline
 kubectl logs ingress-nginx-controller-748d997b68-bxjds
 kubectl edit ingress paymetv-app-ingress
-kubectl describe cert pmtv-acme-http-stag-cert 
+kubectl describe cert pmtv-acme-http-stage-cert 
 kubectl get pods -A
 ```
