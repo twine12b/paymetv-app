@@ -1,5 +1,6 @@
 FROM ubuntu:latest
 LABEL authors="twine"
+LABEL myimage="keepit"
 
 # Update package list and install required packages
 RUN apt-get update && apt-get install -y \
