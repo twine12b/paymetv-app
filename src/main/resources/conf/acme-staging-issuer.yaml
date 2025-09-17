@@ -1,14 +1,14 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: pmtv-acme-http-stag
+  name: pmtv-acme-http-stage
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     #server: https://acme-v02.api.letsencrypt.org/directory # production issuer
     email: mail@paymetv.co.uk #required to register account
     privateKeySecretRef:
-      name: pmtv-acme-http-stag-key
+      name: pmtv-acme-http-stage-key
     solvers:
       - http01:
           ingress:
