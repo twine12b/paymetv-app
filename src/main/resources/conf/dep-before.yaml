@@ -47,10 +47,10 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
-  tls:
-    - secretName: pmtv-acme-http-prod-sec
-      hosts:
-        - paymetv.co.uk
+#  tls:
+#    - secretName: pmtv-acme-http-prod-sec
+#      hosts:
+#        - paymetv.co.uk
   rules:
     - host: paymetv.co.uk
       http:
