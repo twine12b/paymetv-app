@@ -1,0 +1,112 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+.main {
+    height: 100%;
+    width: 100%;
+}
+
+video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1;
+}
+
+.content {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.parent {
+  position: relative;
+  width: 400px;
+  height: 300px;
+}
+
+.background-div {
+  width: 100%;
+  height: 100%;
+  background: #ccc;
+}
+
+.overlay-div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.logo {
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  top: 10%;
+  width: 30%;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    font-size: 40%;
+    z-index: 10;
+}
+
+.slogan {
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  top: 40%;
+  font-size: 80%
+}
+.container {
+  width: 95vw;
+  height: 95vh;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 600px) {
+  .container {
+    width: 98vw;
+    height: 98vh;
+    border-radius: 0.5rem;
+  }
+  .logo {
+    width: 70vw;
+    max-width: 90vw;
+  }
+  .slogan {
+    font-size: 1.2rem;
+  }
+  .footer {
+    font-size: 0.8rem;
+    height: 40px;
+    line-height: 40px;
+  }
+}
