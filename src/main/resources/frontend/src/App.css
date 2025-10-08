@@ -1,11 +1,12 @@
-*{
-    margin: 0;
-    padding: 0;
-}
 
 .main {
     height: 100%;
     width: 100%;
+}
+
+.cursive {
+    font-family: 'Dancing Script', cursive;
+    text-transform: none;
 }
 
 video {
@@ -41,6 +42,27 @@ video {
   background: #ccc;
 }
 
+.overlay-div1 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 95vw;
+  height: 95vh;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+}
+
+.logo-container {
+  position: absolute;
+  top: 20;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .overlay-div {
   position: absolute;
   top: 0;
@@ -64,22 +86,32 @@ video {
   width: 30%;
 }
 
-.footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 50px;
-    font-size: 40%;
-    z-index: 10;
+.vertical-stack {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* or center, as needed */
+  gap: 1rem; /* optional: space between divs */
 }
 
 .slogan {
   position: absolute;
-  margin-left: auto;
-  margin-right: auto;
-  top: 40%;
-  font-size: 80%
+  margin: 0 auto;
+  margin-top: 13.5rem; /* adjust as needed for spacing */
+  font-size: 80%;
+  width: fit-content;
+  text-align: center;
 }
+
+.message {
+  position: absolute;
+  margin: 0 auto;
+  margin-top: 17.5rem; /* adjust as needed for spacing */
+  font-size: 200%;
+  width: fit-content;
+  text-align: center;
+}
+
 .container {
   width: 95vw;
   height: 95vh;
@@ -91,22 +123,129 @@ video {
   z-index: 1;
 }
 
-@media (max-width: 600px) {
-  .container {
-    width: 98vw;
-    height: 98vh;
-    border-radius: 0.5rem;
-  }
-  .logo {
-    width: 70vw;
-    max-width: 90vw;
-  }
-  .slogan {
+* {
+    margin: 0;
+    padding: 0;
+    color: white;
+    box-sizing: border-box;
+}
+
+html, body, #root {
+    height: 100%;
+    width: 100%;
+}
+
+.main {
+    height: 100vh;
+    width: 100vw;
+}
+
+video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1;
+}
+
+.content {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.overlay-div1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 95vw;
+    height: 95vh;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+}
+
+.logo-container {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    max-width: 400px;
+}
+
+.logo {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    position: static;
+}
+
+.slogan {
+    position: relative;
+    margin: -2rem auto 0 auto;
     font-size: 1.2rem;
-  }
-  .footer {
-    font-size: 0.8rem;
-    height: 40px;
-    line-height: 40px;
-  }
+    width: fit-content;
+    text-align: center;
+}
+
+.message {
+    position: relative;
+    margin: 4rem auto 0 auto;
+    font-size: 3.5rem;
+    width: fit-content;
+    text-align: center;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    font-size: 0.5rem;
+    z-index: 10;
+    text-align: center;
+}
+
+.vertical-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.container {
+    width: 95vw;
+    height: 95vh;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.overlay-div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 1;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
