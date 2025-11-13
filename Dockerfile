@@ -1,5 +1,4 @@
-#FROM openjdk:17-jdk-alpine
-FROM openjdk:latest
+FROM bellsoft/liberica-openjdk-alpine
 LABEL authors="twine"
 LABEL myimage="keepit"
 
