@@ -2,6 +2,27 @@ kubectlkubect[![Build Status](http://www.paymetv.co.uk:8080/buildStatus/icon?job
 ##Paymetv limited
 ###The fast track way to get paid for your videos
 
+####run locally
+````
+Manually build the react-app
+cd src/main/resources/frontend
+npm install
+npm run build
+
+Manually build the java app
+mvn clean install
+java -jar target/paymetv-0.0.1-SNAPSHOT.jar
+
+Manually build the docker image
+docker build -t paymetv-app:latest .
+docker run -dp 192.168.0.2:80:8080 paymetv-app:latest
+````
+
+####Deploy to kubernetes
+````
+run the setup_cert_manager.sh 
+./src/main/resources/conf/setup_cert_manager.sh script
+````
 
 ####Deploy/Setup
 ````
