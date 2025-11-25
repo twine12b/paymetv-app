@@ -53,6 +53,10 @@ Kubernetes SSL with cert-manager
 https://youtu.be/MRhEWpkd5Ig?si=GLmRAPDKjZbyv1Zv
 https://github.com/gurlal-1/devops-avenue/tree/main/yt-videos/kind-cert-manager
 
+install tailwindcss
+url - https://tailwindcss.com/docs/guides/vite 
+video - https://www.youtube.com/watch?v=sHnG8tIYMB4 (this works for version tailwindcss v4)
+
 ## Useful Commands
 ```commandline
 kubectl logs ingress-nginx-controller-748d997b68-bxjds
