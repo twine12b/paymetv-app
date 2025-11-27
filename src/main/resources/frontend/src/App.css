@@ -1,252 +1,76 @@
+/* css */
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.main {
-    height: 100%;
-    width: 100%;
+@layer base {
+  /* global defaults */
+  * { @apply m-0 p-0 box-border text-white; }
+  html, body, #root { @apply h-full w-full bg-black; }
 }
 
-.cursive {
-    font-family: 'Dancing Script', cursive;
-    text-transform: none;
-}
+/* component utilities that mirror your original classes */
+@layer components {
+  .main {
+    @apply h-screen w-screen;
+  }
 
-video {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
-    z-index: -1;
-}
+  .bg-video {
+    @apply fixed top-0 left-0 w-screen h-screen object-cover -z-10 pointer-events-none;
+  }
 
-.content {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
+  .content {
+    @apply absolute inset-0 h-full w-full flex flex-col justify-center items-center;
+  }
 
-.parent {
-  position: relative;
-  width: 400px;
-  height: 300px;
-}
+  .parent {
+    @apply relative;
+    width: 400px;
+    height: 300px;
+  }
 
-.background-div {
-  width: 100%;
-  height: 100%;
-  background: #ccc;
-}
+  .background-div {
+    @apply w-full h-full bg-gray-300;
+  }
 
-.overlay-div1 {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 95vw;
-  height: 95vh;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: white;
-}
+  .overlay-div1 {
+    @apply absolute left-1/2 -translate-x-1/2 top-[0] w-[99vw] h-[99vh] m-auto flex flex-col items-center text-white;
+  }
 
-.logo-container {
-  position: absolute;
-  top: 20;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-}
+  .logo-container {
+    @apply absolute left-1/2 -translate-x-1/2 top-[15%] w-[80vw] max-w-[400px];
+  }
 
-.overlay-div {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 1;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
+  .logo {
+    @apply w-full max-w-[300px] h-auto block mx-auto my-0 static;
+  }
 
-.logo {
-  position: absolute;
-  margin-left: auto;
-  margin-right: auto;
-  top: 10%;
-  width: 30%;
-}
+  .vertical-stack {
+    @apply flex flex-col items-center gap-4;
+  }
 
-.vertical-stack {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* or center, as needed */
-  gap: 1rem; /* optional: space between divs */
-}
+  .slogan {
+    @apply relative mt-[-2rem] text-[1.2rem] w-fit text-center;
+  }
 
-.slogan {
-  position: absolute;
-  margin: 0 auto;
-  margin-top: 13.5rem; /* adjust as needed for spacing */
-  font-size: 80%;
-  width: fit-content;
-  text-align: center;
-}
+  .message {
+    @apply relative mt-[4rem] text-[3.5rem] w-fit text-center;
+  }
 
-.message {
-  position: absolute;
-  margin: 0 auto;
-  margin-top: 17.5rem; /* adjust as needed for spacing */
-  font-size: 200%;
-  width: fit-content;
-  text-align: center;
-}
+  .container {
+    @apply w-[95vw] h-[95vh] m-auto flex items-center justify-center relative z-[1];
+  }
 
-.container {
-  width: 95vw;
-  height: 95vh;
-  margin: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-}
+  .overlay-div {
+    @apply absolute top-0 left-0 w-screen h-screen bg-black/50 z-10 flex items-center justify-center text-white;
+  }
 
-* {
-    margin: 0;
-    padding: 0;
-    color: white;
-    box-sizing: border-box;
-}
+  .footer {
+    @apply absolute bottom-0 w-full h-[50px] text-xs z-10 text-center;
+  }
 
-html, body, #root {
-    height: 100%;
-    width: 100%;
-}
-
-.main {
-    height: 100vh;
-    width: 100vw;
-}
-
-video {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
-    z-index: -1;
-}
-
-.content {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.overlay-div1 {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 95vw;
-    height: 95vh;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: white;
-}
-
-.logo-container {
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80vw;
-    max-width: 400px;
-}
-
-.logo {
-    width: 100%;
-    max-width: 300px;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-    position: static;
-}
-
-.slogan {
-    position: relative;
-    margin: -2rem auto 0 auto;
-    font-size: 1.2rem;
-    width: fit-content;
-    text-align: center;
-}
-
-.message {
-    position: relative;
-    margin: 4rem auto 0 auto;
-    font-size: 3.5rem;
-    width: fit-content;
-    text-align: center;
-}
-
-.footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 50px;
-    font-size: 0.5rem;
-    z-index: 10;
-    text-align: center;
-}
-
-.vertical-stack {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
-
-.container {
-    width: 95vw;
-    height: 95vh;
-    margin: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 1;
-}
-
-.overlay-div {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0,0,0,0.5);
-    z-index: 1;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .landing-video {
+    @apply fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 object-cover min-w-full min-h-full z-[0] pointer-events-none;
+  }
 }
