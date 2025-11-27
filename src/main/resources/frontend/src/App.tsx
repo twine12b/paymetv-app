@@ -2,13 +2,13 @@ import { useState } from 'react'
 // import pmtvLogo from './assets/whiteout-tvlogo-Only.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import './styles/landing-page/mobile.css'
-import './styles/landing-page/pad.css'
 import Footer from './components/Footer'
 import Logo from './components/Logo'
 import Message from './components/Message'
 import Slogan from './components/Slogan'
 import VideoBackground from './components/VideoBackground'
+import './output.css'
+
 
 function App() {
 
