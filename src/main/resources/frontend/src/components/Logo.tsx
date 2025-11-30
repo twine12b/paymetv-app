@@ -7,7 +7,7 @@ const Logo = () => {
         <img
           src={pmtvLogo}
           alt="Paymetv"
-          className="landing-logo-default landing-logo-sm landing-logo-md landing-logo-lg"
+          className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-[320px] lg:max-w-[350px] xl:max-w-[450px] h-auto block"
         />
     </div>
   );
