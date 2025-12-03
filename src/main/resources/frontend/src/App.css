@@ -11,3 +11,48 @@ html, body, #root {
     height: 100%;
     width: 100%;
 }
+
+@layer component {
+ .landing-msg-default {
+   @apply relative text-[2.5rem] text-center top-[-10] font-bold top-[-5.5rem];
+   }
+ .landing-msg-sm {
+   @apply relative sm:text-[4rem] sm:top-[-210px] text-center font-bold max-w-full;
+   }
+ .landing-msg-md {
+   @apply relative md:text-[4.5rem] md:top-[15px] text-center font-bold max-w-full;
+   }
+ .landing-slogan-default {
+   @apply text-sm text-center max-w-full;
+   }
+ .landing-slogan-sm {
+   @apply sm:text-[20px] text-center max-w-full;
+   }
+ .landing-slogan-md {
+   @apply md:text-[28px] text-center max-w-full;
+   }
+ .landing-logo-default {
+  @apply w-full max-w-[180px] h-auto block top-[10px];
+ }
+ .landing-logo-sm {
+  @apply w-full sm:max-w-[220px] h-auto block;
+ }
+ .landing-logo-md {
+  @apply w-full md:max-w-[320px] h-auto block;
+ }
+ .landing-logo-lg {
+  @apply w-full lg:max-w-[350px] h-auto block;
+ }
+ .landing-footer-default {
+  @apply absolute bottom-4 w-full text-[0.6rem] text-center;
+ }
+ .landing-footer-sm {
+  @apply absolute w-full sm:text-[0.7rem];
+ }
+ .landing-footer-md {
+  @apply absolute w-full md:text-[0.85rem];
+ }
+ .landing-footer-lg {
+  @apply absolute w-full lg:text-[0.85rem];
+ }
+}
