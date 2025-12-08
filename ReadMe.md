@@ -15,7 +15,7 @@ java -jar target/paymetv-0.0.1-SNAPSHOT.jar
 
 Manually build the docker image
 docker build -t paymetv-app:latest .
-docker run -dp 192.168.0.2:80:8080 paymetv-app:latest
+docker run -dp 192.168.0.2:8090:80 paymetv-app:latest
 ````
 
 ####Deploy to kubernetes
@@ -52,6 +52,10 @@ https://platform9.com/learn/v1.0/tutorials/nginix-controller-via-yaml
 Kubernetes SSL with cert-manager
 https://youtu.be/MRhEWpkd5Ig?si=GLmRAPDKjZbyv1Zv
 https://github.com/gurlal-1/devops-avenue/tree/main/yt-videos/kind-cert-manager
+
+install tailwindcss
+url - https://tailwindcss.com/docs/guides/vite 
+video - https://www.youtube.com/watch?v=sHnG8tIYMB4 (this works for version tailwindcss v   4)
 
 ## Useful Commands
 ```commandline

@@ -1,6 +1,8 @@
 const Message = () => {
     return (
-        <h1 className="cursive message">COMING SOON!!!.. </h1>
+        <div className="landing-msg-default landing-msg-sm landing-msg-md">
+          COMING SOON
+        </div>
     );
 };
 
