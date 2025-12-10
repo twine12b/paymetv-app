@@ -56,6 +56,7 @@ https://github.com/gurlal-1/devops-avenue/tree/main/yt-videos/kind-cert-manager
 install tailwindcss
 url - https://tailwindcss.com/docs/guides/vite 
 video - https://www.youtube.com/watch?v=sHnG8tIYMB4 (this works for version tailwindcss v   4)
+npm install tailindcss @tailwindcss/cli
 
 ## Useful Commands
 ```commandline
