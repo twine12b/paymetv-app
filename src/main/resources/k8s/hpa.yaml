@@ -1,0 +1,42 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: paymetv-app-hpa
+  labels:
+    app: paymetv-app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: paymetv-app-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # Target 70% CPU utilization
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60  # Wait 60s before scaling down
+      policies:
+        - type: Percent
+          value: 50  # Scale down max 50% of current pods
+          periodSeconds: 60
+        - type: Pods
+          value: 2  # Or scale down max 2 pods
+          periodSeconds: 60
+      selectPolicy: Min  # Use the policy that scales down the least
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Scale up immediately
+      policies:
+        - type: Percent
+          value: 100  # Scale up max 100% of current pods (double)
+          periodSeconds: 15
+        - type: Pods
+          value: 4  # Or scale up max 4 pods
+          periodSeconds: 15
+      selectPolicy: Max  # Use the policy that scales up the most
+
