@@ -39,7 +39,38 @@ get_hpa_metrics() {
 
 # Function to get pod metrics
 get_pod_metrics() {
-    kubectl top pods -n "${NAMESPACE}" -l app=paymetv-app --no-headers 2>/dev/null
+    # Try to find pods with the correct label
+    local pods=$(kubectl top pods -n "${NAMESPACE}" -l app=paymetv-app --no-headers 2>/dev/null)
+
+    # If no pods found with paymetv-app label, try pmtv-app label
+    if [ -z "$pods" ]; then
+        pods=$(kubectl top pods -n "${NAMESPACE}" -l app=pmtv-app --no-headers 2>/dev/null)
+    fi
+
+    # If still no pods, try getting all pods from the deployment
+    if [ -z "$pods" ]; then
+        pods=$(kubectl top pods -n "${NAMESPACE}" --selector="app in (paymetv-app,pmtv-app)" --no-headers 2>/dev/null)
+    fi
+
+    echo "$pods"
+}
+
+# Function to detect the correct app label
+detect_app_label() {
+    # Check if pods exist with paymetv-app label
+    if kubectl get pods -n "${NAMESPACE}" -l app=paymetv-app --no-headers 2>/dev/null | grep -q .; then
+        echo "paymetv-app"
+        return 0
+    fi
+
+    # Check if pods exist with pmtv-app label
+    if kubectl get pods -n "${NAMESPACE}" -l app=pmtv-app --no-headers 2>/dev/null | grep -q .; then
+        echo "pmtv-app"
+        return 0
+    fi
+
+    # No pods found
+    return 1
 }
 
 # Check if HPA exists
@@ -49,6 +80,24 @@ if ! kubectl get hpa "${HPA_NAME}" -n "${NAMESPACE}" &>/dev/null; then
     kubectl get hpa -n "${NAMESPACE}"
     exit 1
 fi
+
+# Detect the app label being used
+APP_LABEL=$(detect_app_label)
+if [ $? -ne 0 ]; then
+    echo -e "${RED}ERROR: No pods found with labels 'app=paymetv-app' or 'app=pmtv-app' in namespace '${NAMESPACE}'${NC}"
+    echo ""
+    echo "Available pods in namespace '${NAMESPACE}':"
+    kubectl get pods -n "${NAMESPACE}"
+    echo ""
+    echo "Available deployments:"
+    kubectl get deployments -n "${NAMESPACE}"
+    echo ""
+    echo -e "${YELLOW}TIP: Run './scripts/diagnose-pods.sh ${NAMESPACE}' for detailed diagnostics${NC}"
+    exit 1
+fi
+
+echo -e "Detected app label: ${GREEN}app=${APP_LABEL}${NC}"
+echo ""
 
 # Monitoring loop
 while true; do
