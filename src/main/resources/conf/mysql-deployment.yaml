@@ -1,0 +1,178 @@
+# MySQL Database Deployment for PayMeTV Application
+# This manifest creates a MySQL 8.4 database with persistent storage
+
+---
+# PersistentVolumeClaim for MySQL data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  labels:
+    app: mysql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  # Adjust size as needed
+  # storageClassName: standard  # Uncomment and specify if needed
+
+---
+# ConfigMap for MySQL custom configuration (optional)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  labels:
+    app: mysql
+data:
+  custom.cnf: |
+    [mysqld]
+    # Character set configuration
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_unicode_ci
+    
+    # Performance tuning
+    max_connections=200
+    innodb_buffer_pool_size=256M
+    innodb_log_file_size=64M
+    
+    # Logging
+    general_log=0
+    slow_query_log=1
+    slow_query_log_file=/var/log/mysql/slow-query.log
+    long_query_time=2
+
+---
+# Secret for MySQL credentials
+# Note: In production, use proper secret management (e.g., Sealed Secrets, External Secrets)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  labels:
+    app: mysql
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "rootpassword"
+  MYSQL_DATABASE: "paymetv_db"
+  MYSQL_USER: "paymetv_user"
+  MYSQL_PASSWORD: "paymetv_pass"
+
+---
+# MySQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: mysql
+spec:
+  replicas: 1  # MySQL typically runs as a single instance
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate  # Important for stateful apps with persistent storage
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: paymetv/mysql-db:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          
+          # Environment variables from Secret
+          envFrom:
+            - secretRef:
+                name: mysql-secret
+          
+          # Additional environment variables
+          env:
+            - name: MYSQL_CHARSET
+              value: "utf8mb4"
+            - name: MYSQL_COLLATION
+              value: "utf8mb4_unicode_ci"
+          
+          # Resource limits and requests
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          
+          # Volume mounts
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+            - name: mysql-config-volume
+              mountPath: /etc/mysql/conf.d
+          
+          # Liveness probe - checks if MySQL is running
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+                - -u
+                - root
+                - -p${MYSQL_ROOT_PASSWORD}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe - checks if MySQL is ready to accept connections
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+                - -u
+                - root
+                - -p${MYSQL_ROOT_PASSWORD}
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: mysql-config-volume
+          configMap:
+            name: mysql-config
+
+---
+# MySQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  labels:
+    app: mysql
+spec:
+  type: ClusterIP  # Internal service, not exposed outside cluster
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+      name: mysql
+  selector:
+    app: mysql
+  # Enable session affinity for consistent connections
+  sessionAffinity: ClientIP
+
