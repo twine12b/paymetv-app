@@ -2,6 +2,11 @@
 
 set -e  # Exit on error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+root_dir="$(cd "$SCRIPT_DIR/../../../../" && pwd -P)"
+
+echo "Script directory: $SCRIPT_DIR"
+
 namespace=default
 
 # Colors for output
@@ -17,8 +22,9 @@ echo ""
 
 # Step 1: Build MySQL Docker Image
 echo -e "${YELLOW}Step 1: Building MySQL Docker Image...${NC}"
-if [ -f "../../dockerfile_db" ]; then
-    docker build -f ../../dockerfile_db -t paymetv/mysql-db:latest ../../
+# Use absolute path to dockerfile at project root for reliability
+if [ -f "$root_dir/dockerfile_db" ]; then
+    docker build -f "$root_dir/dockerfile_db" -t paymetv/mysql-db:latest "$root_dir"
     echo -e "${GREEN}✓ MySQL Docker image built successfully${NC}"
 else
     echo -e "${YELLOW}⚠ dockerfile_db not found, skipping MySQL image build${NC}"
