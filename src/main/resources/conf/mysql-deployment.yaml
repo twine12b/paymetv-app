@@ -87,19 +87,19 @@ spec:
             - containerPort: 3306
               name: mysql
               protocol: TCP
-          
+
           # Environment variables from Secret
           envFrom:
             - secretRef:
                 name: mysql-secret
-          
+
           # Additional environment variables
           env:
             - name: MYSQL_CHARSET
               value: "utf8mb4"
             - name: MYSQL_COLLATION
               value: "utf8mb4_unicode_ci"
-          
+
           # Resource limits and requests
           resources:
             requests:
@@ -108,14 +108,14 @@ spec:
             limits:
               cpu: 1000m
               memory: 1Gi
-          
+
           # Volume mounts
           volumeMounts:
             - name: mysql-persistent-storage
               mountPath: /var/lib/mysql
             - name: mysql-config-volume
               mountPath: /etc/mysql/conf.d
-          
+
           # Liveness probe - checks if MySQL is running
           livenessProbe:
             exec:
@@ -131,7 +131,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-          
+
           # Readiness probe - checks if MySQL is ready to accept connections
           readinessProbe:
             exec:
@@ -147,7 +147,7 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 3
-      
+
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
