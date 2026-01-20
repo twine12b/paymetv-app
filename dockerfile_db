@@ -1,0 +1,45 @@
+# MySQL 8.4 Database Dockerfile for PayMeTV Application
+# This Dockerfile creates a MySQL database server for the PayMeTV application
+
+FROM mysql:8.4
+
+# Metadata
+LABEL maintainer="PayMeTV Team"
+LABEL description="MySQL 8.4 database for PayMeTV application"
+LABEL version="1.0"
+
+# Environment variables for MySQL configuration
+# These can be overridden when running the container or in Kubernetes deployment
+ENV MYSQL_ROOT_PASSWORD=rootpassword
+ENV MYSQL_DATABASE=paymetv_db
+ENV MYSQL_USER=paymetv_user
+ENV MYSQL_PASSWORD=paymetv_pass
+
+# Set MySQL character set and collation for proper UTF-8 support
+ENV MYSQL_CHARSET=utf8mb4
+ENV MYSQL_COLLATION=utf8mb4_unicode_ci
+
+# Expose MySQL port
+EXPOSE 3306
+
+# Optional: Copy initialization scripts
+# Uncomment and add SQL files to init-scripts/ directory if needed
+# COPY init-scripts/ /docker-entrypoint-initdb.d/
+
+# The official MySQL image already has a proper entrypoint
+# that handles initialization, so we don't need to override it
+
+# Health check to verify MySQL is ready
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD} || exit 1
+
+# Volume for persistent data storage
+# This will be overridden by Kubernetes PersistentVolumeClaim
+VOLUME ["/var/lib/mysql"]
+
+# Note: The MySQL image uses the following default configuration:
+# - Data directory: /var/lib/mysql
+# - Configuration files: /etc/mysql/conf.d/
+# - Logs: /var/log/mysql/
+# - Socket: /var/run/mysqld/mysqld.sock
+
