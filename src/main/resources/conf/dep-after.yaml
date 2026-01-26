@@ -67,7 +67,7 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - secretName: pmtv-acme-http-prod-sec
+    - secretName: ${SECRET_NAME}
       hosts:
         - paymetv.co.uk
   rules:
