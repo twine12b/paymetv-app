@@ -9,6 +9,33 @@ echo "Script directory: $SCRIPT_DIR"
 
 namespace=default
 
+SECRET_NAME=$1
+
+if [[ -z "$SECRET_NAME" ]]; then
+  echo "======================================="
+  echo "Error: secret_name argument is required"
+  echo "======================================="
+  echo "Usage: $0 <SECRET_NAME>"
+  echo "Example: $0 pmtv-acme-http-prod-sec"
+  exit 1
+fi
+
+# Handle shortcuts or use literal secret name
+if [ "$SECRET_NAME" == "prod" ]; then
+  SECRET_NAME="pmtv-acme-http-prod-sec"
+  echo "Using production secret name: $SECRET_NAME"
+elif [ "$SECRET_NAME" = "dev" ]; then
+  SECRET_NAME="pmtv-acme-http-stage-sec"
+  echo "Using development/staging secret name: $SECRET_NAME"
+else
+    echo "======================================================"
+    echo "Error: secret_name argument must be either prod or dev"
+    echo "======================================================"
+    exit 1
+fi
+
+export SECRET_NAME
+
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -18,40 +45,6 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
-echo ""
-
-# Step 1: Build MySQL Docker Image
-echo -e "${YELLOW}Step 1: Building MySQL Docker Image...${NC}"
-# Use absolute path to dockerfile at project root for reliability
-if [ -f "$root_dir/dockerfile_db" ]; then
-    docker build -f "$root_dir/dockerfile_db" -t paymetv/mysql-db:latest "$root_dir"
-    echo -e "${GREEN}✓ MySQL Docker image built successfully${NC}"
-else
-    echo -e "${YELLOW}⚠ dockerfile_db not found, skipping MySQL image build${NC}"
-fi
-echo ""
-
-# Step 2: Deploy MySQL Database
-echo -e "${YELLOW}Step 2: Deploying MySQL Database...${NC}"
-kubectl -n ${namespace} apply -f mysql-deployment.yaml
-echo -e "${GREEN}✓ MySQL deployment manifests applied${NC}"
-echo ""
-
-# Wait for MySQL pod to be ready
-echo -e "${YELLOW}Step 3: Waiting for MySQL pod to be ready...${NC}"
-echo "This may take 1-2 minutes for the first time..."
-until kubectl -n ${namespace} get pods --no-headers | grep mysql-deployment | awk '{print $1}' | \
-  xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
-  sleep 5
-  echo "Still waiting for MySQL..."
-done
-echo -e "${GREEN}✓ MySQL pod is ready${NC}"
-echo ""
-
-# Verify MySQL service is available
-echo -e "${YELLOW}Step 4: Verifying MySQL service...${NC}"
-kubectl -n ${namespace} get svc mysql-service
-echo -e "${GREEN}✓ MySQL service is available${NC}"
 echo ""
 
 # Step 5: Create ingress-nginx namespace and deploy
@@ -71,13 +64,9 @@ done
 echo -e "${GREEN}✓ Ingress-nginx controller pod is ready${NC}"
 echo ""
 
-# Step 7: Deploy the PayMeTV app (before cert-manager)
-echo -e "${YELLOW}Step 7: Deploying PayMeTV application (initial)...${NC}"
-kubectl apply -f dep-before.yaml
-echo -e "${GREEN}✓ PayMeTV app deployment manifests applied${NC}"
-echo ""
-
-echo -e "${YELLOW}Step 8: Waiting for PayMeTV app pod to be ready...${NC}"
+#Deploy the app and wait until it is ready
+envsubst < dep-before.yaml | kubectl apply -f -
+echo "Waiting for paymetv-app' pod to be ready..."
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
     xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
   sleep 5
@@ -119,9 +108,10 @@ echo ""
 
 # Step 13: Deploy the app with TLS certificates
 echo -e "${YELLOW}Step 13: Deploying PayMeTV application (with TLS)...${NC}"
-kubectl apply -f dep-after.yaml
+envsubst < dep-after.yaml | kubectl apply -f -
 echo -e "${GREEN}✓ PayMeTV app deployment updated with TLS${NC}"
 echo ""
+exit 1
 
 echo -e "${YELLOW}Step 14: Waiting for PayMeTV app pod to be ready (final)...${NC}"
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
