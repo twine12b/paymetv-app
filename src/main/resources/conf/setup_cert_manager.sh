@@ -4,6 +4,7 @@ set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 root_dir="$(cd "$SCRIPT_DIR/../../../../" && pwd -P)"
+STREAMING_DIR="$root_dir/src/main/resources/streaming/conf"
 
 echo "Script directory: $SCRIPT_DIR"
 
@@ -16,17 +17,17 @@ if [[ -z "$SECRET_NAME" ]]; then
   echo "Error: secret_name argument is required"
   echo "======================================="
   echo "Usage: $0 <SECRET_NAME>"
-  echo "Example: $0 pmtv-acme-http-prod-sec"
+  echo "Example: $0 dev"
   exit 1
 fi
 
 # Handle shortcuts or use literal secret name
 if [ "$SECRET_NAME" == "prod" ]; then
   SECRET_NAME="pmtv-acme-http-prod-sec"
-  echo "Using production secret name: $SECRET_NAME"
+  echo "Using production secret name: $SECRET_NAME" # not safe for production
 elif [ "$SECRET_NAME" = "dev" ]; then
   SECRET_NAME="pmtv-acme-http-stage-sec"
-  echo "Using development/staging secret name: $SECRET_NAME"
+  echo "Using development/staging secret name: $SECRET_NAME"  # not safe for production
 else
     echo "======================================================"
     echo "Error: secret_name argument must be either prod or dev"
@@ -47,14 +48,25 @@ echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
-# Step 5: Create ingress-nginx namespace and deploy
+# Step 5: Deploy Lighttpd
+echo -e "${YELLOW}Step 5: Setting up Ingress NGINX...${NC}"
+kubectl create namespace streaming --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n streaming apply -f ${STREAMING_DIR}/deployment.yaml
+echo -e "${GREEN}✓ deployment LIGHTTPD deployed${NC}"
+kubectl -n streaming apply -f ${STREAMING_DIR}/service.yaml
+echo -e "${GREEN}✓ Service LIGHTTPD deployed${NC}"
+envsubst < ${STREAMING_DIR}/ingress.yaml | kubectl -n streaming apply -f -
+echo -e "${GREEN}✓ Ingress Lighttpd deployed${NC}"
+echo ""
+
+# Step 6: Create ingress-nginx namespace and deploy
 echo -e "${YELLOW}Step 5: Setting up Ingress NGINX...${NC}"
 kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n ${namespace} apply -f deploy.yaml
 echo -e "${GREEN}✓ Ingress NGINX deployed${NC}"
 echo ""
 
-# Step 6: Wait for ingress-nginx controller pod to be ready
+# Step 7: Wait for ingress-nginx controller pod to be ready
 echo -e "${YELLOW}Step 6: Waiting for ingress-nginx controller pod to be ready...${NC}"
 until kubectl -n ${namespace} get pods --no-headers | grep controller | awk '{print $1}' | \
   xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
@@ -64,7 +76,7 @@ done
 echo -e "${GREEN}✓ Ingress-nginx controller pod is ready${NC}"
 echo ""
 
-#Deploy the app and wait until it is ready
+# Step 8: Deploy the app and wait until it is ready
 envsubst < dep-before.yaml | kubectl apply -f -
 echo "Waiting for paymetv-app' pod to be ready..."
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
@@ -90,7 +102,7 @@ done
 echo -e "${GREEN}✓ Cert-manager webhook pod is ready${NC}"
 echo ""
 
-# Step 11: Install certificate issuers
+# Step 10: Install certificate issuers
 echo -e "${YELLOW}Step 11: Installing certificate issuers...${NC}"
 kubectl apply -f self-signed-issuer.yaml
 kubectl apply -f acme-staging-issuer.yaml
@@ -98,7 +110,7 @@ kubectl apply -f acme-prod-issuer.yaml
 echo -e "${GREEN}✓ Certificate issuers installed${NC}"
 echo ""
 
-# Step 12: Create certificates
+# Step 11: Create certificates
 echo -e "${YELLOW}Step 12: Creating certificates...${NC}"
 kubectl apply -f self-signed-cert.yaml
 kubectl apply -f acme-staging-cert.yaml
@@ -106,12 +118,12 @@ kubectl apply -f acme-prod-cert.yaml
 echo -e "${GREEN}✓ Certificates created${NC}"
 echo ""
 
-# Step 13: Deploy the app with TLS certificates
+# Step 12: Deploy the app with TLS certificates
 echo -e "${YELLOW}Step 13: Deploying PayMeTV application (with TLS)...${NC}"
 envsubst < dep-after.yaml | kubectl apply -f -
 echo -e "${GREEN}✓ PayMeTV app deployment updated with TLS${NC}"
 echo ""
-exit 1
+
 
 echo -e "${YELLOW}Step 14: Waiting for PayMeTV app pod to be ready (final)...${NC}"
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \

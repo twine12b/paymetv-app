@@ -2,7 +2,7 @@
 
 set -e  # Exit on error (but we'll use || true for optional deletions)
 
-namespace="default"
+namespaces=("default" "streaming")
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -18,7 +18,7 @@ echo ""
 
 
 # Confirmation prompt
-echo -e "${YELLOW}WARNING: This will delete all Kubernetes resources in the '${namespace}' namespace.${NC}"
+echo -e "${YELLOW}WARNING: This will delete all Kubernetes resources in the default and streaming namespace.${NC}"
 if [ "$PRESERVE_SECRETS" = true ]; then
   echo -e "${BLUE}  - Secrets will be PRESERVED${NC}"
 fi
@@ -36,23 +36,24 @@ if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
   exit 0
 fi
 
+for namespace in "${namespaces[@]}"; do
 echo -e "${BLUE}Starting teardown of resources in namespace: ${namespace}${NC}"
 echo ""
 
 # Step 2: Delete Deployments (to prevent pod recreation)
-echo -e "${YELLOW}Step 2: Deleting Deployments...${NC}"
-#kubectl delete deployments --all -n $namespace
+kubectl delete deployments --all -n $namespace
 kubectl delete deployments -n $namespace --all 2>/dev/null || echo -e "${BLUE}  No deployments found${NC}"
 kubectl delete pods --all -n $namespace
 echo -e "${GREEN}✓ Deployments deleted${NC}"
 echo ""
+done
 
 echo -e "${GREEN}=========================================${NC}"
 echo -e "${GREEN}Teardown Complete!${NC}"
 echo -e "${GREEN}=========================================${NC}"
 echo ""
 echo -e "${BLUE}Summary:${NC}"
-echo -e "  - All resources in namespace '${namespace}' have been deleted"
+echo -e "  - All resources in namespace default & streaming have been deleted"
 if [ "$PRESERVE_SECRETS" = true ]; then
   echo -e "  - Secrets were preserved"
 fi
