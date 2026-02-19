@@ -91,6 +91,7 @@ metadata:
     app: paymetv-app
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#    cert-manager.io/cluster-issuer: "${ISSUER_NAME}"
 spec:
   ingressClassName: nginx
   tls:

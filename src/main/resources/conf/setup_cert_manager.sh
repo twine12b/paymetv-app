@@ -137,6 +137,7 @@ echo ""
 echo -e "${YELLOW}Installing $1 certificate issuers...${NC}"
 kubectl apply -f self-signed-issuer.yaml
 kubectl apply -f acme-staging-issuer.yaml
+kubectl apply -f acme-prod-issuer.yaml
 echo -e "${GREEN}✓ ($1) - Certificate issuers installed${NC}"
 echo ""
 
