@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymetv-app-deployment
+  labels:
+    app: paymetv-app
+spec:
+  replicas: 2  # Initial replicas - HPA will manage this
+  selector:
+    matchLabels:
+      app: paymetv-app
+  template:
+    metadata:
+      labels:
+        app: paymetv-app
+    spec:
+      containers:
+        - name: paymetv-app
+          image: paymetv/paymetv-app:latest
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          # Resource requests and limits are REQUIRED for HPA to work
+          resources:
+            requests:
+              cpu: 200m      # Request 200 millicores (0.2 CPU)
+              memory: 256Mi  # Request 256 MiB memory
+            limits:
+              cpu: 500m      # Limit to 500 millicores (0.5 CPU)
+              memory: 512Mi  # Limit to 512 MiB memory
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx384m"
+

@@ -100,9 +100,9 @@ echo ""
 # Wait for ingress-nginx pod with 'controller' in its name to be ready
 echo -e "${YELLOW}Waiting for ingress-nginx controller pod to be ready...${NC}"
 until kubectl -n ${namespace} get pods --no-headers | grep controller | awk '{print $1}' | \
-  xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True; do
+  xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
   sleep 5
-  echo "Still waiting..."
+  echo "Still waiting for ingress-nginx controller..."
 done
 echo -e "${GREEN}✓ Ingress-nginx controller pod is ready${NC}"
 echo ""
@@ -111,9 +111,9 @@ echo ""
 envsubst < dep-before.yaml | kubectl apply -f -
 echo -e  ${YELLOW}"Waiting for paymetv-app' pod to be ready...${NC}"
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
-    xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True; do
+    xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
   sleep 5
-  echo "Still waiting..."
+  echo "Still waiting for PayMeTV app..."
 done
 echo -e "${GREEN}✓ PayMeTV app deployment pod is ready${NC}"
 echo ""
@@ -126,9 +126,9 @@ echo ""
 
 echo -e "${YELLOW}Waiting for cert-manager webhook pod to be ready...${NC}"
 until kubectl -n cert-manager get pods --no-headers | grep cert-manager-webhook | awk '{print $1}' | \
-    xargs -I{} kubectl -n cert-manager get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True; do
+    xargs -I{} kubectl -n cert-manager get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
   sleep 5
-  echo "Still waiting..."
+  echo "Still waiting for cert-manager webhook..."
 done
 echo -e "${GREEN}✓ Cert-manager webhook pod is ready${NC}"
 echo ""
@@ -154,9 +154,9 @@ echo -e "${YELLOW}Step 13: Deploying PayMeTV application (with TLS)...${NC}"
 envsubst < dep-after.yaml | kubectl apply -f -
 echo "Waiting for paymetv-app' pod to be ready..."
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
-    xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True; do
+    xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q True; do
   sleep 5
-  echo "Still waiting..."
+  echo "Still waiting for PayMeTV app (final)..."
 done
 echo -e "${GREEN}✓ PayMeTV app deployment pod is ready (final)${NC}"
 echo ""
