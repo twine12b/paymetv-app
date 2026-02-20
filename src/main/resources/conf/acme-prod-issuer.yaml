@@ -8,7 +8,7 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory # production issuer
     email: mail@paymetv.co.uk
     privateKeySecretRef:
-      name: pmtv-acme-htttp-prod-key
+      name: pmtv-acme-http-prod-key
     solvers:
       - http01:
           ingress:
