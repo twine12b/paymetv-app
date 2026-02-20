@@ -31,7 +31,7 @@ RUN apk --no-cache add php7 \
 
 COPY conf/lighttpd.conf /etc/lighttpd/lighttpd.conf
 
-COPY html/ /var/www/
+COPY html/ /var/www
 
 # Set proper permissions on configuration and web content
 RUN chown -R lighttpd:lighttpd /var/www && \

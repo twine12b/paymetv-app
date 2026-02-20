@@ -128,4 +128,3 @@ kubectl -n ${namespace} get svc -l app.kubernetes.io/name=ingress-nginx
 echo ""
 echo -e "${GREEN}You can now re-run the setup script to deploy ingress-nginx fresh.${NC}"
 echo ""
-
