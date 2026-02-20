@@ -2,6 +2,12 @@
 
 conf_dir="./conf"
 
+#teardown port forwards
+kill $(lsof -t -i:9090) 2>/dev/null || true
+kill $(lsof -t -i:3000) 2>/dev/null || true
+kill $(lsof -t -i:9093) 2>/dev/null || true
+kill $(lsof -t -i:8000) 2>/dev/null || true
+
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts/
 helm repo update
 
