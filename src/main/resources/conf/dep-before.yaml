@@ -16,9 +16,37 @@ spec:
     spec:
       containers:
         - name: paymetv-app
-          image: paymetv/paymetv-app:latest # Replace with your actual Docker image
+          image: paymetv/paymetv-app:latest
           ports:
             - containerPort: 80
+              name: http
+              protocol: TCP
+              # Health probes using Spring Boot Actuator
+          # Health probes using Spring Boot Actuator
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Resource limits for better pod management
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
@@ -44,7 +72,7 @@ metadata:
     app: paymetv-app
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+#    cert-manager.io/cluster-issuer: "${ISSUER_NAME}"
 spec:
   ingressClassName: nginx
   tls:
