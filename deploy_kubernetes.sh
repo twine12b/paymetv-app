@@ -18,7 +18,7 @@ kubectl expose deployment pmtv-app --type=LoadBalancer --name=paymetv-service
 
 sleep 20
 kubectl get pods --output=wide
-curl http://192.168.0.2:80
+curl http://127.0.0.1:80
 sleep 10
 kubectl get deployments -n $namespace
 kubectl get svc paymetv-app-service -n $namespace
