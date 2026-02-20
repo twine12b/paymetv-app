@@ -19,34 +19,6 @@ spec:
           image: paymetv/paymetv-app:latest # Replace with your actual Docker image
           ports:
             - containerPort: 80
-              name: http
-              protocol: TCP
-              # Health probes using Spring Boot Actuator
-          # Health probes using Spring Boot Actuator
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 80
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 80
-            initialDelaySeconds: 20
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
-          # Resource limits for better pod management
-          resources:
-            requests:
-              cpu: 200m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -91,11 +63,11 @@ metadata:
     app: paymetv-app
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-#    cert-manager.io/cluster-issuer: "${ISSUER_NAME}"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   tls:
-    - secretName:  ${SECRET_NAME}
+    - secretName: ${SECRET_NAME}
       hosts:
         - paymetv.co.uk
   rules:
