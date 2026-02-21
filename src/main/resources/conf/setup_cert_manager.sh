@@ -6,7 +6,6 @@ set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 root_dir="$(cd "$SCRIPT_DIR/../../../../" && pwd -P)"
-STREAMING_DIR="$root_dir/src/main/resources/streaming/conf"
 
 echo "Script directory: $SCRIPT_DIR"
 
@@ -14,7 +13,6 @@ namespace=default
 
 SECRET_NAME=$1
 ISSUER_NAME=""
-
 
 if [[ -z "$SECRET_NAME" ]]; then
   echo "======================================="
@@ -69,6 +67,12 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Set the namespace for the current context
+echo -e "${YELLOW}Setting namespace for current context...${NC}"
+kubectl config set-context --current --namespace=default
+echo -e "${GREEN}✓ Namespace set${NC}"
+echo ""
+
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
@@ -77,25 +81,14 @@ echo ""
 # Create ingress-nginx namespace and deploy
 echo -e "${YELLOW}Setting up Ingress NGINX...${NC}"
 kubectl get namespace ingress-nginx >/dev/null 2>&1 || kubectl create namespace ingress-nginx
-#envsubst < deploy.yaml | kubectl -n ${namespace} apply -f -
 kubectl -n ${namespace} apply -f deploy.yaml
+if ! kubectl -n "${namespace}" rollout status deployment/ingress-nginx-controller --timeout=300s; then
+  kubectl -n "${namespace}" get pods -l app=ingress-nginx -o wide
+  kubectl -n "${namespace}" logs -l app=mysql --tail=200 || true
+  exit 1
+fi
 echo -e "${GREEN}✓ Ingress NGINX deployed${NC}"
 echo ""
-
-# Deploy lighttpd
-kubectl get namespace ingress-nginx >/dev/null 2>&1 || kubectl create namespace ingress-nginx
-# Deploy Lighttpd
-echo -e "${YELLOW}Setting up Ingress NGINX...${NC}"
-#kubectl create namespace streaming --dry-run=client -o yaml | kubectl apply -f -
-kubectl get namespace streaming >/dev/null 2>&1 || kubectl create namespace streaming
-kubectl -n streaming apply -f ${STREAMING_DIR}/deployment.yaml
-echo -e "${GREEN}✓ deployment LIGHTTPD deployed${NC}"
-kubectl -n streaming apply -f ${STREAMING_DIR}/service.yaml
-echo -e "${GREEN}✓ Service LIGHTTPD deployed${NC}"
-envsubst < ${STREAMING_DIR}/ingress.yaml | kubectl -n streaming apply -f -
-echo -e "${GREEN}✓ Ingress Lighttpd deployed${NC}"
-echo ""
-
 
 # Wait for ingress-nginx pod with 'controller' in its name to be ready
 echo -e "${YELLOW}Waiting for ingress-nginx controller pod to be ready...${NC}"

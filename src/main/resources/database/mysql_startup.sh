@@ -15,6 +15,22 @@ echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
+# Cleanup: Stop existing port-forward process - TODO move to common script keep (DRY)
+echo -e "${YELLOW}Cleanup: Stopping existing port-forward process...${NC}"
+if [ -f ".portforward.pid" ]; then
+  PID=$(cat .portforward.pid 2>/dev/null || true)
+  if [ -n "$PID" ] && ps -p $PID > /dev/null 2>&1; then
+    kill $PID 2>/dev/null || true
+    echo -e "${GREEN}✓ Stopped port-forward process (PID: $PID)${NC}"
+  else
+    echo -e "${YELLOW}  No running port-forward process found${NC}"
+  fi
+  rm -f .portforward.pid 2>/dev/null || true
+else
+  echo -e "${YELLOW}  No previous port-forward PID file found${NC}"
+fi
+echo ""
+
 # teardown the database namespace and all its resources - TODO delete docker volume and kill port-forward
 echo -e "${YELLOW}Step 0: tearing down the database namespace and all its resources...${NC}"
 kubectl delete namespace database --ignore-not-found=true
