@@ -701,3 +701,22 @@ For issues or questions:
 **Best for:** Development, testing, temporary access
 
 
+Connect via the command line:
+```bash
+kubectl port-forward -n database svc/mysql 30006:3306
+```
+
+Then connect using your local MySQL client:
+```bash
+mysql -h 127.0.0.1 -P 30006 -u todd -p
+```
+Alternatively you can use the following command to connect using the root user:
+```bash
+mysql -h 127.0.0.1 -P 30006 -u root -pCh1ldren
+```
+You can connect using Kubernetes exec as well:
+```bash
+kubectl exec -it deployment/mysql-deployment -n database -- mysql -uroot -pCh1ldren paymetv_db1
+```
+
+
