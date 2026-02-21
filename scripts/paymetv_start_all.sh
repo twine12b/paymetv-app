@@ -8,14 +8,29 @@ app_dir="../src/main/resources/conf"
 streaming_dir="../src/main/resources/streaming"
 database_dir="../src/main/resources/database"
 monitoring_dir="../src/main/resources/prometheus"
-ENVIRONMENT="local"
+ENVIRONMENT=$1
 
-# Colors
+# Colors - TODO move to common script
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
+
+if [ -z "$ENVIRONMENT" ]; then
+  echo -e "${RED}Usage: $0 <ENVIRONMENT>${NC}"
+  echo -e "${BLUE}Example: $0 dev${NC}"
+  exit 1
+fi
+
+# check if the environment name is eith prod dev or local
+if [[ "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "local" ]]; then
+  echo -e "${BLUE}=======================================${NC}"
+  echo -e "${RED}Error: ENVIRONMENT must be either prod, dev or local${NC}"
+  echo -e "${YELLOW}Example: $0 dev${NC}"
+  echo -e "${BLUE}=======================================${NC}"
+  exit 1
+fi
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}✓ PayMeTV Starting All Deployments${NC}"
