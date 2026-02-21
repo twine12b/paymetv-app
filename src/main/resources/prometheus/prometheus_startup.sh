@@ -17,14 +17,27 @@ helm install prometheus  prometheus-community/kube-prometheus-stack --version 45
 kubectl expose service prometheus-server --type=LoadBalancer --name=prometheus-server-lb
 #kubectl get svc prometheus-server-lb
 
+kubectl get namespace database >/dev/null 2>&1 || kubectl create namespace database
+
+
 pushd ${conf_dir} > /dev/null
 kubectl apply -f .
 popd > /dev/null
 
+echo -e "${YELLOW}Waiting for Prometheus to be ready...${NS}"
+if ! kubectl -n monitoring rollout status deployment/fastapi-app --timeout=1200s; then
+  echo "Timed out or deployment failed. Showing pod status and recent logs for debugging:"
+  kubectl -n monitoring get pods -l app=prometheus-server -o wide
+  kubectl -n monitoring logs -l app=prometheus-server --tail=200 || true
+  exit 1
+fi
+echo -e "${GREEN}Prometheus is ready${NS}"
+echo ""
+
 # port forward Prometheus services
 kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090 > /dev/null 2>&1 &
 # port forward Grafana services
-kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80 > /dev/null 2>&1 &
+kubectl port-forward -n monitoring svc/prometheus-grafana 3010:80 > /dev/null 2>&1 &
 # port forward Alertmanager services
 kubectl port-forward -n monitoring svc/alertmanager-operated 9093:9093 > /dev/null 2>&1 &
 # port forward FastAPI services
