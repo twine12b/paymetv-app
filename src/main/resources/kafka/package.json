@@ -1,0 +1,10 @@
+{
+  "name": "kafka-client",
+  "version": "1.0.0",
+  "description": "Kafka producer/consumer example",
+  "main": "index.js",
+  "dependencies": {
+    "kafka-node": "^5.0.0",
+    "kafkajs": "^2.2.4"
+  }
+}
