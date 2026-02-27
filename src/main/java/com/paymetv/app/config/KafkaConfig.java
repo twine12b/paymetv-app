@@ -20,5 +20,22 @@ public class KafkaConfig {
                 .replicas(1)
                 .build();
     }
+
+    /**
+     * Declares the "pmtv-test-topic" topic for the PmtvKafkaService.
+     * This topic is used by the Java service that replicates pmtv-test.js functionality.
+     *
+     * Configuration matches the JavaScript implementation:
+     * - Topic: pmtv-test-topic
+     * - Partitions: 1
+     * - Replication factor: 1 (for single-broker development)
+     */
+    @Bean
+    public NewTopic pmtvTestTopic() {
+        return TopicBuilder.name("pmtv-test-topic")
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
 }
 
