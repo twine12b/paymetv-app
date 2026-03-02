@@ -1,0 +1,10 @@
+# requirements.txt for PayMeTV Machine Learning Pipeline
+
+numpy
+matplotlib
+pandas
+plotly
+rembg
+scikit-learn
+tensorflow
+tensorflow-io
