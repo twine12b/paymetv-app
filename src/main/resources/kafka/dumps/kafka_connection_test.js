@@ -2,8 +2,8 @@ const { Kafka, logLevel } = require('kafkajs');
 
 const kafka = new Kafka({
   clientId: 'my-producer',
-  brokers: ['localhost:9092'],
-  logLevel: logLevel.DEBUG, // ERROR | WARN | INFO | DEBUG | NOTHING
+  brokers: ['192.168.0.165:9093'],
+  logLevel: logLevel.DEBUG // ERROR | WARN | INFO | DEBUG | NOTHING
 });
 
 const producer = kafka.producer();

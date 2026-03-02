@@ -2,12 +2,13 @@
 
 set -e
 
-NAMESPACE="${1:default 2:-streaming 3:-database 4:-monitoring}"
+NAMESPACE="${1:default 2:-streaming 3:-database 4:-monitoring 5:-kafka}"
 K8S_DIR="src/main/resources/k8s"
 app_dir="../src/main/resources/conf"
 streaming_dir="../src/main/resources/streaming"
 database_dir="../src/main/resources/database"
 monitoring_dir="../src/main/resources/prometheus"
+kafka_dir="../src/main/resources/kafka"
 ENVIRONMENT=$1
 
 # Colors - TODO move to common script
@@ -35,6 +36,15 @@ fi
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}✓ PayMeTV Starting All Deployments${NC}"
 echo -e "${BLUE}=========================================${NC}"
+echo ""
+
+# Step 0: Starting Kafka app (Paymetv dependes on it)
+kubectl config set-context --current --namespace=${NAMESPACE-kafka}
+echo -e "${YELLOW}Step 5: Starting Kafka app...${NC}"
+pushd $kafka_dir > /dev/null
+./kafka_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Kafka app started${NC}"
 echo ""
 
 # Step1: Starting Paymetv app
@@ -81,12 +91,14 @@ popd > /dev/null
 echo -e "${GREEN}✓ Monitoring app started${NC}"
 echo ""
 
+
 # Final Summary
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}✓ All Deployments Started!${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 echo "Deployment components:"
+echo "  ✓ Kafka Application - http://localhost:8082"
 echo "  ✓ PayMeTV Application - http://localhost:8080"
 echo "  ✓ Streaming Application - http://localhost:3000"
 echo "  ✓ Database Application - http://localhost:3306"

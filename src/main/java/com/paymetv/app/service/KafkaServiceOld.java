@@ -20,14 +20,14 @@ import org.springframework.stereotype.Service;
  *   autoCommit: true → spring.kafka.consumer.enable-auto-commit=true
  */
 @Service
-public class KafkaService {
+public class KafkaServiceOld {
 
-    private static final Logger log = LoggerFactory.getLogger(KafkaService.class);
+    private static final Logger log = LoggerFactory.getLogger(KafkaServiceOld.class);
     private static final String TOPIC = "hello-world";
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public KafkaService(KafkaTemplate<String, String> kafkaTemplate) {
+    public KafkaServiceOld(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
@@ -37,14 +37,16 @@ public class KafkaService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendHelloWorld() {
-        kafkaTemplate.send(TOPIC, "Hello, world!")
-                .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        log.info("Message sent");
-                    } else {
-                        log.error("Failed to send message to topic {}: {}", TOPIC, ex.getMessage());
-                    }
-                });
+        for (int i = 0; i < 1000; i++) {
+            kafkaTemplate.send(TOPIC, "Spring Kafka, from spring boot! " + i)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("Message sent {}", result.getRecordMetadata().toString());
+                        } else {
+                            log.error("Failed to send message to topic {}: {}", TOPIC, ex.getMessage());
+                        }
+                    });
+        }
     }
 
     /**
