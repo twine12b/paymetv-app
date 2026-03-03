@@ -1,27 +1,30 @@
-import { useState } from 'react'
-// import pmtvLogo from './assets/whiteout-tvlogo-Only.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Footer from './components/Footer'
 import Logo from './components/Logo'
 import Message from './components/Message'
 import Slogan from './components/Slogan'
 import VideoBackground from './components/VideoBackground'
+import FileUploadPage from './components/FileUploadPage'
 import './output.css'
 
+// Simple pathname-based routing — no external router needed.
+// The Spring Boot SpaForwardController forwards /upload to index.html
+// so React can render the correct component.
+const isUploadPage =
+  window.location.pathname === '/upload' ||
+  window.location.pathname === '/upload/';
 
-function App() {
-
+function LandingPage() {
   return (
-      <>
+    <>
       <VideoBackground />
       <div className="relative w-full h-full text-white">
         {/* Logo and Slogan positioned near the top */}
         <div className="top-5 sm:top-12 md:top-16 lg:top-20 w-full px-4 sm:px-6 md:px-8 lg:px-12 flex flex-col items-center">
           <Logo />
-            <div className="relative flex flex-col top-5 sm:top-2">
-              <Slogan />
-            </div>
+          <div className="relative flex flex-col top-5 sm:top-2">
+            <Slogan />
+          </div>
         </div>
 
         {/* Message centered in viewport */}
@@ -29,12 +32,46 @@ function App() {
           <Message />
         </div>
 
+        {/* Upload button — centred above the footer */}
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50">
+          <a
+            href="/upload"
+            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
+                       text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-colors
+                       text-sm sm:text-base"
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M12 16v-8m0 0-3 3m3-3 3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1" />
+            </svg>
+            Upload File
+          </a>
+        </div>
+
         {/* Footer at bottom */}
         <Footer />
-
       </div>
+    </>
+  );
+}
+
+function App() {
+  if (isUploadPage) {
+    return (
+      <>
+        {/* Back link so users can return to the landing page */}
+        <a
+          href="/"
+          className="fixed top-4 left-4 z-50 inline-flex items-center gap-1 bg-gray-800 hover:bg-gray-700
+                     text-white text-sm font-semibold px-4 py-2 rounded-xl shadow transition-colors"
+        >
+          ← Back
+        </a>
+        <FileUploadPage />
       </>
-  )
+    );
+  }
+  return <LandingPage />;
 }
 
 export default App

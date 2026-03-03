@@ -3,7 +3,7 @@ const { kafka} = require('kafkajs');
 async function run({
     const kafka = new Kafka({
         clientId: 'paymetv-client',
-        brokers: ['192.168.0.165:9095'],
+        brokers: ['127.0.0.1:9095'],
 //        brokers: ['kafka-broker-4.kafka.svc.cluster.local:9095'],
         logLevel: logLevel.ERROR,
         retry: {

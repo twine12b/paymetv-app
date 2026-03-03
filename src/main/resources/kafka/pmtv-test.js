@@ -2,7 +2,7 @@ const { Kafka } = require('kafkajs');
 
 const kafka = new Kafka({
   clientId: 'pmtv-test-client',
-  brokers: ['192.168.0.165:9093'],
+  brokers: ['127.0.0.1:9093'],
   retry: {
     initialRetryTime: 100,
     retries: 8

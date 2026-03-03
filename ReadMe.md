@@ -57,6 +57,35 @@ install tailwindcss
 url - https://tailwindcss.com/docs/guides/vite 
 video - https://www.youtube.com/watch?v=sHnG8tIYMB4 (this works for version tailwindcss v   4)
 
+## File Upload Flow
+
+The diagram below shows how browser navigation, the Spring Boot backend, and the React frontend
+work together to expose the file upload feature — both via the landing-page button and by typing
+the URL directly into the browser.
+
+```mermaid
+flowchart TD
+    A([Browser]) -->|"GET /"| B[Spring Boot\nserves index.html]
+    B --> C[React App\nrenders LandingPage]
+    C --> D["🔵 Upload File button\n(href='/upload')"]
+
+    D -->|"User clicks"| E["GET /upload\n(browser nav)"]
+    E --> F["SpaForwardController\nforwards → index.html"]
+    F --> G["React App\n(pathname = /upload)\nrenders FileUploadPage"]
+
+    H([Browser address bar]) -->|"Navigate to\n/api/files/upload"| I["GET /api/files/upload\nFileUploadController"]
+    I -->|"302 redirect → /upload"| E
+
+    G -->|"User selects file\n& clicks Upload"| J["POST /api/files/upload\nmultipart/form-data"]
+    J --> K["FileUploadController\n→ FileUploadService\n→ saves to ./uploads/"]
+    K -->|"200 + metadata JSON"| G
+
+    style D fill:#4f46e5,color:#fff
+    style G fill:#1e293b,color:#e2e8f0
+    style K fill:#166534,color:#fff
+    style I fill:#92400e,color:#fff
+```
+
 ## Useful Commands
 ```commandline
 kubectl logs ingress-nginx-controller-748d997b68-bxjds

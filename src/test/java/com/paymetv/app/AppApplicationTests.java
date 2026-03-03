@@ -1,23 +1,28 @@
 package com.paymetv.app;
 
 import com.jayway.jsonpath.JsonPath;
+import com.paymetv.app.service.FileUploadService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-//@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
 class AppApplicationTests {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private FileUploadService fileUploadService;
 
 	@Test
 	@DisplayName("Context loads successfully")
@@ -157,4 +162,59 @@ class AppApplicationTests {
 				.andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8"));
 	}
 
+	@Test
+	@DisplayName("Upload valid JPEG file returns 200 with all expected fields")
+	void testUploadFile() throws Exception {
+		// Minimal 3-byte payload — content type drives validation, not the bytes
+		MockMultipartFile file = new MockMultipartFile(
+				"file",            // must match @RequestParam("file")
+				"photo.jpg",       // original filename preserved in response
+				"image/jpeg",      // allowed MIME type
+				new byte[]{1, 2, 3}
+		);
+
+		mockMvc.perform(multipart("/api/files/upload").file(file))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.status").value("uploaded"))
+				.andExpect(jsonPath("$.originalName").value("photo.jpg"))
+				.andExpect(jsonPath("$.storedName").exists())
+				.andExpect(jsonPath("$.size").value(3))
+				.andExpect(jsonPath("$.contentType").value("image/jpeg"))
+				.andExpect(jsonPath("$.timestamp").exists());
+	}
+
+	@Test
+	@DisplayName("Upload empty file returns 400 Bad Request")
+	void testUploadEmptyFile() throws Exception {
+		MockMultipartFile emptyFile = new MockMultipartFile(
+				"file",
+				"empty.jpg",
+				"image/jpeg",
+				new byte[0]   // empty — triggers "file is empty" validation
+		);
+
+		mockMvc.perform(multipart("/api/files/upload").file(emptyFile))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.status").value("error"))
+				.andExpect(jsonPath("$.message").exists());
+	}
+
+	@Test
+	@DisplayName("Upload file with disallowed MIME type returns 400 Bad Request")
+	void testUploadInvalidMimeType() throws Exception {
+		MockMultipartFile textFile = new MockMultipartFile(
+				"file",
+				"script.sh",
+				"text/plain",      // not in the allowed-types list
+				"echo hello".getBytes()
+		);
+
+		mockMvc.perform(multipart("/api/files/upload").file(textFile))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.status").value("error"))
+				.andExpect(jsonPath("$.message").exists());
+	}
 }

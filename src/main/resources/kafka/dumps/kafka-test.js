@@ -2,7 +2,7 @@ const { Kafka } = require('kafkajs');
 
 const kafka = new Kafka({
   clientId: 'kafka-test-client',
-  brokers: ['192.168.0.165:9093'], // your Kafka address
+  brokers: ['127.0.0.1:9093'], // your Kafka address
 });
 
 const topic = 'test-topic';

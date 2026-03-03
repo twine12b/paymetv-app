@@ -32,7 +32,7 @@ spec:
             - name: KAFKA_INTER_BROKER_LISTENER_NAME
               value: "PLAINTEXT"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://kafka-broker-4:29095,PLAINTEXT_HOST://192.168.0.165:9095"
+              value: "PLAINTEXT://kafka-broker-4:29095,PLAINTEXT_HOST://127.0.0.1:9095"
             - name: KAFKA_BROKER_ID
               value: "4"
 ---
