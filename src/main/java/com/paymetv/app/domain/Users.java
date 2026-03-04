@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @Entity
 @Getter @Setter

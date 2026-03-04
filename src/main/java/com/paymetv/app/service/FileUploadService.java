@@ -18,7 +18,7 @@ import java.util.UUID;
  * Service for handling file upload business logic.
  *
  * Responsibilities:
- * - Validate file size (max 10 MB)
+ * - Validate file size (max 2 MB)
  * - Validate MIME type against an allowed list
  * - Save the file to the configured upload directory
  * - Return metadata about the saved file
@@ -31,7 +31,7 @@ public class FileUploadService {
     private static final Logger log = LoggerFactory.getLogger(FileUploadService.class);
 
     /** Maximum accepted file size: 10 MB */
-    public static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
+    public static final long MAX_FILE_SIZE_BYTES = 2L * 1024 * 1024;
 
     /** MIME types permitted for upload */
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
@@ -45,6 +45,7 @@ public class FileUploadService {
     );
 
     /** Directory where uploaded files are persisted */
+    // TODO - set this to a PV or S3
     private static final String UPLOAD_DIR = "uploads";
 
     /**
@@ -72,6 +73,8 @@ public class FileUploadService {
         Path destination = uploadPath.resolve(storedFilename);
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         log.info("Saved file '{}' as '{}' ({} bytes)", originalFilename, storedFilename, file.getSize());
+
+        System.out.println("Lets create a Json payLoad and put that on a kafka topic, change the name of deployed kafka to ml");
 
         return Map.of(
                 "originalName", originalFilename,

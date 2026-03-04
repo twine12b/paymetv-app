@@ -1,0 +1,17 @@
+{
+  "id": 68,
+  "name": "test product name",
+  "description": "test Description",
+  "user": {
+    "id": 110,
+    "username": "test user",
+    "password": "password",
+    "email": "test@test.com"
+  },
+  "status": true,
+  "metadata": {
+    "user": null,
+    "description": null,
+    "filename": "null-null"
+  }
+}
