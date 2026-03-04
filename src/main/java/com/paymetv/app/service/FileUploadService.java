@@ -2,6 +2,8 @@ package com.paymetv.app.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +29,9 @@ import java.util.UUID;
  */
 @Service
 public class FileUploadService {
+
+    @Autowired
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadService.class);
 
@@ -75,6 +80,7 @@ public class FileUploadService {
         log.info("Saved file '{}' as '{}' ({} bytes)", originalFilename, storedFilename, file.getSize());
 
         System.out.println("Lets create a Json payLoad and put that on a kafka topic, change the name of deployed kafka to ml");
+        kafkaTemplate.send("file-uploaded", "Hello World");
 
         return Map.of(
                 "originalName", originalFilename,

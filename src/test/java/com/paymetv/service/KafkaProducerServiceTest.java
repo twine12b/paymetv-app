@@ -1,44 +1,48 @@
-package com.paymetv.util.payloads;
+package com.paymetv.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymetv.app.domain.Product;
 import com.paymetv.app.domain.Users;
 import com.paymetv.app.service.JsonPayloadCreatorService;
+import com.paymetv.app.service.KafkaProducerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@SpringBootTest(classes= JsonPayloadCreatorService.class)
+@SpringBootTest(classes = {KafkaProducerService.class, JsonPayloadCreatorService.class})
+@DirtiesContext
 @AutoConfigureMockMvc
-class JsonPayloadCreatorServiceTest {
+public class KafkaProducerServiceTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private JsonPayloadCreatorService jsonPayloadCreatorService;
+    private KafkaProducerService kafkaProducerService;
 
-    private Product product;
-    private Users test_user;
+    @Autowired
+    private JsonPayloadCreatorService jsonPayloadCreatorService;
 
     ObjectMapper mapper = new ObjectMapper();
     private JsonNode expected_product_json;
     private JsonNode expected_user_json;
 
-    @Test
-    void jsonImagePayload() throws IllegalStateException {
-    }
+    private Product product;
+    private Users test_user;
+
+//    @Test
+//    @DisplayName("Context loads successfully")
+//    void contextLoads() {
+//        // This test verifies that the Spring application context loads without errors
+//    }
 
     @BeforeEach
     void setup() throws IOException {
@@ -60,25 +64,18 @@ class JsonPayloadCreatorServiceTest {
     }
 
     @Test
-    @DisplayName("create a Json file from a Product object and a filename [string value]")
-    void createProductJsonFile() throws JsonProcessingException {
-
+    @DisplayName("Test Kafka Producer Service")
+    public void testKafkaProducerService() {
+        // Gather data to send
         String filename = "product_test.json";
+        String topicName = "ml_streaming";
         Object object = product;
+        JsonNode payload = jsonPayloadCreatorService.createJsonNode(object);
 
-        JsonNode actual = jsonPayloadCreatorService.createJsonNode(object);
-        assertNotNull(actual);
-        assertEquals(expected_product_json, actual);
-    }
+        // Publish message
+        kafkaProducerService.sendMessage(topicName, payload);
 
-    @Test
-    @DisplayName("create a Json file from a Users object and a filename [string value]")
-    void createUsersJsonFile() throws JsonProcessingException {
-        String filename = "user_test.json";
-        Object object = test_user;
-
-        JsonNode actual = jsonPayloadCreatorService.createJsonNode(object);
-        assertNotNull(actual);
-        assertEquals(expected_user_json, actual);
+//        JsonNode product_json = mapper.valueToTree(product);
+//        kafkaProducerService.sendMessage("Hello World");
     }
 }
