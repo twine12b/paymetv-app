@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.IOException;
 
 @Service
-public class ImagePayloadCreatorService {
+public class JsonPayloadCreatorService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

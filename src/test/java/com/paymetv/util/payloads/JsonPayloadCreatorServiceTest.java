@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 //@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @SpringBootTest(classes= JsonPayloadCreatorService.class)
 @AutoConfigureMockMvc
-class ImagePayloadCreatorServiceTest {
+class JsonPayloadCreatorServiceTest {
 
     @Autowired
     private MockMvc mockMvc;
