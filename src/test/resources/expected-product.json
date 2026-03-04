@@ -8,10 +8,5 @@
     "password": "password",
     "email": "test@test.com"
   },
-  "status": true,
-  "metadata": {
-    "user": null,
-    "description": null,
-    "filename": "null-null"
-  }
+  "status": true
 }

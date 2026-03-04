@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymetv.app.domain.Product;
 import com.paymetv.app.domain.Users;
-import com.paymetv.app.service.ImagePayloadCreatorService;
+import com.paymetv.app.service.JsonPayloadCreatorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 
 //@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@SpringBootTest(classes=ImagePayloadCreatorService.class)
+@SpringBootTest(classes= JsonPayloadCreatorService.class)
 @AutoConfigureMockMvc
 class ImagePayloadCreatorServiceTest {
 
@@ -27,7 +27,7 @@ class ImagePayloadCreatorServiceTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ImagePayloadCreatorService imagePayloadCreatorService;
+    private JsonPayloadCreatorService jsonPayloadCreatorService;
 
     private Product product;
     private Users test_user;
@@ -66,7 +66,7 @@ class ImagePayloadCreatorServiceTest {
         String filename = "product_test.json";
         Object object = product;
 
-        JsonNode actual = imagePayloadCreatorService.createJsonNode(object);
+        JsonNode actual = jsonPayloadCreatorService.createJsonNode(object);
         assertNotNull(actual);
         assertEquals(expected_product_json, actual);
     }
@@ -77,7 +77,7 @@ class ImagePayloadCreatorServiceTest {
         String filename = "user_test.json";
         Object object = test_user;
 
-        JsonNode actual = imagePayloadCreatorService.createJsonNode(object);
+        JsonNode actual = jsonPayloadCreatorService.createJsonNode(object);
         assertNotNull(actual);
         assertEquals(expected_user_json, actual);
     }
