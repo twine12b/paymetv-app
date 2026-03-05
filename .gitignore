@@ -16,5 +16,6 @@
 .idea/encodings.xml
 .idea/compiler.xml
 src/main/resources/kafka/node_modules/
+uploads/
 
 
