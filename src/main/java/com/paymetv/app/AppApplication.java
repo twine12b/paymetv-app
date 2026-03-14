@@ -6,10 +6,18 @@ import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.core.RoutingKafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,16 +28,20 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 @SpringBootApplication
-@RestController
+@EntityScan(basePackages = "com.paymetv.app.domain")
+//@RestController
 @Tag(name = "PayMeTV API", description = "REST API for PayMeTV application with item management and metrics")
 public class AppApplication implements WebMvcConfigurer {
 
@@ -51,6 +63,16 @@ public class AppApplication implements WebMvcConfigurer {
     public MeterRegistry meterRegistry() {
         this.meterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         return this.meterRegistry;
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(false)
+                .maxAge(3600);
     }
 
     @Override
@@ -219,4 +241,28 @@ public class AppApplication implements WebMvcConfigurer {
             meterRegistry.timer("http_request_duration_seconds", tags).record(duration, TimeUnit.NANOSECONDS);
         }
     }
+//
+//    @Bean
+//    public RoutingKafkaTemplate routingTemplate(GenericApplicationContext context,
+//                                                ProducerFactory<Object, Object> pf) {
+//
+//        // Clone the PF with a different Serializer, register with Spring for shutdown
+//        Map<String, Object> configs = new HashMap<>(pf.getConfigurationProperties());
+//        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+//        DefaultKafkaProducerFactory<Object, Object> bytesPF = new DefaultKafkaProducerFactory<>(configs);
+//        context.registerBean("bytesPF", DefaultKafkaProducerFactory.class, () -> bytesPF);
+//
+//        Map<Pattern, ProducerFactory<Object, Object>> map = new LinkedHashMap<>();
+//        map.put(Pattern.compile("two"), bytesPF);
+//        map.put(Pattern.compile(".+"), pf); // Default PF with StringSerializer
+//        return new RoutingKafkaTemplate(map);
+//    }
+//
+//    @Bean
+//    public ApplicationRunner runner(RoutingKafkaTemplate routingTemplate) {
+//        return args -> {
+//            routingTemplate.send("one", "thing1");
+//            routingTemplate.send("two", "thing2".getBytes());
+//        };
+//    }
 }

@@ -153,19 +153,20 @@ cd src/main/resources/conf
 
 ```bash
 # Get MySQL pod name
-MYSQL_POD=$(kubectl get pods -l app=mysql -n default -o jsonpath='{.items[0].metadata.name}')
+MYSQL_POD=$(kubectl get pods -l app=mysql -n database -o jsonpath='{.items[0].metadata.name}')
 
 # Connect to MySQL
-kubectl exec -it $MYSQL_POD -n default -- mysql -u paymetv_user -ppaymetv_pass paymetv_db
+kubectl exec -it $MYSQL_POD -n database -- mysql -u paymetv_user -p paymetv_pass paymetv_db
 
 # Run a test query
-kubectl exec -it $MYSQL_POD -n default -- mysql -u paymetv_user -ppaymetv_pass paymetv_db -e "SHOW DATABASES;"
+kubectl exec -it $MYSQL_POD -n database -- mysql -u paymetv_user -ppaymetv_pass paymetv_db -e "SHOW DATABASES;"
+kubectl exec -it $MYSQL_POD -n database -- mysql -u todd -ppassword paymetv_db1 -e "SHOW DATABASES;"
 ```
 
 ### Check MySQL Logs
 
 ```bash
-kubectl logs -l app=mysql -n default --tail=50
+kubectl logs -l app=mysql -n database --tail=50
 ```
 
 ### Test Connection from Application
@@ -174,7 +175,7 @@ Once the PayMeTV application is deployed, it will automatically connect to MySQL
 
 Check application logs for database connection:
 ```bash
-kubectl logs -l app=paymetv-app -n default | grep -i mysql
+kubectl logs -l app=paymetv-app -n database | grep -i mysql
 ```
 
 ## Database Access
@@ -193,7 +194,7 @@ Applications in the same namespace can connect using:
 For local development, you can port-forward:
 
 ```bash
-kubectl port-forward svc/mysql-service 3306:3306 -n default
+kubectl port-forward svc/mysql-service 3306:3306 -n database
 ```
 
 Then connect using:
@@ -214,30 +215,30 @@ Or use a GUI tool (MySQL Workbench, DBeaver, etc.):
 
 ```bash
 # Get MySQL pod name
-MYSQL_POD=$(kubectl get pods -l app=mysql -n default -o jsonpath='{.items[0].metadata.name}')
+MYSQL_POD=$(kubectl get pods -l app=mysql -n database -o jsonpath='{.items[0].metadata.name}')
 
 # Create backup
-kubectl exec $MYSQL_POD -n default -- mysqldump -u root -prootpassword paymetv_db > backup.sql
+kubectl exec $MYSQL_POD -n database -- mysqldump -u root -prootpassword paymetv_db > backup.sql
 
 # Or backup all databases
-kubectl exec $MYSQL_POD -n default -- mysqldump -u root -prootpassword --all-databases > backup-all.sql
+kubectl exec $MYSQL_POD -n database -- mysqldump -u root -prootpassword --all-databases > backup-all.sql
 ```
 
 ### Restore Database
 
 ```bash
 # Restore from backup
-kubectl exec -i $MYSQL_POD -n default -- mysql -u root -prootpassword paymetv_db < backup.sql
+kubectl exec -i $MYSQL_POD -n database -- mysql -u root -prootpassword paymetv_db < backup.sql
 ```
 
 ### Scale/Restart MySQL
 
 ```bash
 # Restart MySQL pod
-kubectl rollout restart deployment/mysql-deployment -n default
+kubectl rollout restart deployment/mysql-deployment -n database
 
 # Check rollout status
-kubectl rollout status deployment/mysql-deployment -n default
+kubectl rollout status deployment/mysql-deployment -n database
 ```
 
 ### Update MySQL Configuration
@@ -245,8 +246,8 @@ kubectl rollout status deployment/mysql-deployment -n default
 Edit the ConfigMap and restart:
 
 ```bash
-kubectl edit configmap mysql-config -n default
-kubectl rollout restart deployment/mysql-deployment -n default
+kubectl edit configmap mysql-config -n database
+kubectl rollout restart deployment/mysql-deployment -n database
 ```
 
 ### Update Credentials
@@ -255,12 +256,12 @@ kubectl rollout restart deployment/mysql-deployment -n default
 
 ```bash
 # Update secret
-kubectl edit secret mysql-secret -n default
+kubectl edit secret mysql-secret -n database
 
 # Update application.properties and rebuild app
 # Then restart both MySQL and application
-kubectl rollout restart deployment/mysql-deployment -n default
-kubectl rollout restart deployment/paymetv-app-deployment -n default
+kubectl rollout restart deployment/mysql-deployment -n database
+kubectl rollout restart deployment/paymetv-app-deployment -n database
 ```
 
 ## Troubleshooting
@@ -269,7 +270,7 @@ kubectl rollout restart deployment/paymetv-app-deployment -n default
 
 Check pod events:
 ```bash
-kubectl describe pod -l app=mysql -n default
+kubectl describe pod -l app=mysql -n database
 ```
 
 Common issues:
@@ -281,20 +282,20 @@ Common issues:
 
 Check service and endpoints:
 ```bash
-kubectl get svc mysql-service -n default
-kubectl get endpoints mysql-service -n default
+kubectl get svc mysql-service -n database
+kubectl get endpoints mysql-service -n database
 ```
 
 Verify MySQL is listening:
 ```bash
-kubectl exec -it $MYSQL_POD -n default -- netstat -tlnp | grep 3306
+kubectl exec -it $MYSQL_POD -n database -- netstat -tlnp | grep 3306
 ```
 
 ### Readiness Probe Failing
 
 Check MySQL logs:
 ```bash
-kubectl logs -l app=mysql -n default --tail=100
+kubectl logs -l app=mysql -n database --tail=100
 ```
 
 Common causes:
@@ -306,20 +307,20 @@ Common causes:
 
 Check PVC status:
 ```bash
-kubectl get pvc mysql-pvc -n default
-kubectl describe pvc mysql-pvc -n default
+kubectl get pvc mysql-pvc -n database
+kubectl describe pvc mysql-pvc -n database
 ```
 
 Verify volume mount:
 ```bash
-kubectl exec -it $MYSQL_POD -n default -- df -h /var/lib/mysql
+kubectl exec -it $MYSQL_POD -n database -- df -h /var/lib/mysql
 ```
 
 ### Performance Issues
 
 Check resource usage:
 ```bash
-kubectl top pod -l app=mysql -n default
+kubectl top pod -l app=mysql -n database
 ```
 
 Adjust resource limits in `mysql-deployment.yaml` if needed.

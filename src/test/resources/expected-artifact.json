@@ -1,0 +1,18 @@
+{
+  "id": 68,
+  "name": "test artifact name",
+  "description": "test Description",
+  "model": "some_test_model stored as string",
+  "image_faces": {
+    "id": 99,
+    "front": "test_front_aspect.png",
+    "artifact_id": 68
+  },
+  "user": {
+    "id": 110,
+    "username": "test user",
+    "password": "password",
+    "email": "test@test.com"
+  },
+  "status": true
+}

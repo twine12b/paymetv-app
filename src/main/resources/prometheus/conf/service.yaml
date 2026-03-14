@@ -6,9 +6,11 @@ metadata:
   labels:
     app: fastapi-app
 spec:
+  type: LoadBalancer
   selector:
     app: fastapi-app
   ports:
-  - port: 8000
+  - name: web
+    protocol: TCP
+    port: 8000
     targetPort: 8000
-    name: web

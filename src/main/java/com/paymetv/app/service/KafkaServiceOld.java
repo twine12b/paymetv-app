@@ -22,44 +22,44 @@ import org.springframework.stereotype.Service;
 @Service
 public class KafkaServiceOld {
 
-    private static final Logger log = LoggerFactory.getLogger(KafkaServiceOld.class);
-    private static final String TOPIC = "hello-world";
-
-    private final KafkaTemplate<String, String> kafkaTemplate;
-
-    public KafkaServiceOld(KafkaTemplate<String, String> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
-
-    /**
-     * Fires once the application context is fully started — equivalent to
-     * producer.on('ready', () => producer.send([{ topic, messages }], callback)).
-     */
-    @EventListener(ApplicationReadyEvent.class)
-    public void sendHelloWorld() {
-        for (int i = 0; i < 1000; i++) {
-            kafkaTemplate.send(TOPIC, "Spring Kafka, from spring boot! " + i)
-                    .whenComplete((result, ex) -> {
-                        if (ex == null) {
-                            log.info("Message sent {}", result.getRecordMetadata().toString());
-                        } else {
-                            log.error("Failed to send message to topic {}: {}", TOPIC, ex.getMessage());
-                        }
-                    });
-        }
-    }
-
-    /**
-     * Equivalent to consumer.on('message', msg => console.log('Received', msg.value)).
-     * Partition 0 is pinned to match the JS consumer's { partition: 0 } subscription.
-     * Auto-commit is handled by spring.kafka.consumer.enable-auto-commit=true.
-     */
-    @KafkaListener(
-            topicPartitions = @TopicPartition(topic = TOPIC, partitions = "0"),
-            groupId = "paymetv-group"
-    )
-    public void consume(String message) {
-        log.info("Received: {}", message);
-    }
+//    private static final Logger log = LoggerFactory.getLogger(KafkaServiceOld.class);
+//    private static final String TOPIC = "hello-world";
+//
+//    private final KafkaTemplate<String, String> kafkaTemplate;
+//
+//    public KafkaServiceOld(KafkaTemplate<String, String> kafkaTemplate) {
+//        this.kafkaTemplate = kafkaTemplate;
+//    }
+//
+//    /**
+//     * Fires once the application context is fully started — equivalent to
+//     * producer.on('ready', () => producer.send([{ topic, messages }], callback)).
+//     */
+//    @EventListener(ApplicationReadyEvent.class)
+//    public void sendHelloWorld() {
+//        for (int i = 0; i < 1000; i++) {
+//            kafkaTemplate.send(TOPIC, "Spring Kafka, from spring boot! " + i)
+//                    .whenComplete((result, ex) -> {
+//                        if (ex == null) {
+//                            log.info("Message sent {}", result.getRecordMetadata().toString());
+//                        } else {
+//                            log.error("Failed to send message to topic {}: {}", TOPIC, ex.getMessage());
+//                        }
+//                    });
+//        }
+//    }
+//
+//    /**
+//     * Equivalent to consumer.on('message', msg => console.log('Received', msg.value)).
+//     * Partition 0 is pinned to match the JS consumer's { partition: 0 } subscription.
+//     * Auto-commit is handled by spring.kafka.consumer.enable-auto-commit=true.
+//     */
+//    @KafkaListener(
+//            topicPartitions = @TopicPartition(topic = TOPIC, partitions = "0"),
+//            groupId = "paymetv-group"
+//    )
+//    public void consume(String message) {
+//        log.info("Received: {}", message);
+//    }
 }
 
