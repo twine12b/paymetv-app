@@ -86,7 +86,7 @@ echo ""
 
 # Port forward to the database - this is only required for local development
 echo -e "${YELLOW}Step 5: Port-forwarding to the database...${NC}"
-kubectl port-forward -n database svc/mysql 3306:3306 > /dev/null 2>&1 &
+kubectl port-forward -n database svc/mysql :3306 > /dev/null 2>&1 &
 PORT_FORWARD_PID=$!
 echo $PORT_FORWARD_PID > .portforward.pid
 echo -e "${GREEN}✓ Database port-forwarded${NC}"

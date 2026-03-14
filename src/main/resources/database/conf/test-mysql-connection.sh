@@ -111,7 +111,9 @@ start_port_forward() {
 
     # Start port-forward in background
     kubectl port-forward -n $NAMESPACE service/$SERVICE_NAME $PORT_FORWARD_PORT:3306 >/dev/null 2>&1 &
+    kubectl port-forward svc/mysql 3306:3306
     PF_PID=$!
+
 
     # Wait for port-forward to establish
     sleep 3

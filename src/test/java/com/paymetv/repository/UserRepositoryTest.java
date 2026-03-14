@@ -1,5 +1,6 @@
 package com.paymetv.repository;
 
+import com.paymetv.app.AppApplication;
 import com.paymetv.app.domain.Users;
 import com.paymetv.app.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,11 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 
+//@SpringBootApplication(scanBasePackages = "com.paymetv.app")
+@ContextConfiguration(classes = AppApplication.class)
 @DataJpaTest
 @Tag("UserRepositoryTest")
 public class UserRepositoryTest {
@@ -57,6 +62,8 @@ public class UserRepositoryTest {
     void testFindByUsername() {
         Users user = userRepository.findByUsername(user1.getUsername());
 
+        assertNotNull(user.getId());
+
         assertThat(user)
             .isNotNull()
             .isEqualTo(user1);
@@ -97,5 +104,16 @@ public class UserRepositoryTest {
             .isNotEmpty()
             .hasSize(1)
             .doesNotContain(user2);
+    }
+
+    @Test
+    @DisplayName("insert a user")
+    void testInsertUser() {
+        userRepository.save(user1);
+        Users foundUser = userRepository.findByUsername(user1.getUsername());
+
+        assertThat(foundUser)
+                .isNotNull()
+                .isEqualTo(user1);
     }
 }

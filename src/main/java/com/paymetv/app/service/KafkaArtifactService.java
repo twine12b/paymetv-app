@@ -1,11 +1,12 @@
 package com.paymetv.app.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class KafkaProducerService {
+public class KafkaArtifactService {
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
@@ -14,10 +15,7 @@ public class KafkaProducerService {
         kafkaTemplate.send(topic, message);
     }
 
-//    private final KafkaTemplate<String, Object> kafkaTemplate;
-////    private final ObjectMapper objectMapper = new ObjectMapper();
-////
-//    public KafkaProducerService(KafkaTemplate<String, Object> kafkaTemplate) {
-//        this.kafkaTemplate = kafkaTemplate;
-//    }
+    public KafkaArtifactService(KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
 }

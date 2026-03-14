@@ -1,22 +1,23 @@
 package com.paymetv.app.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import lombok.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Getter @Setter
-public class Product {
+@Getter @Setter @ToString
+@Table(name = "artifact")
+public class Artifact {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
     private String name;
     private String description;
+    private String model; // ML Model once trained
+
+    @OneToOne
+    private ImageFace image_faces;
 
     @ManyToOne
     private Users user;

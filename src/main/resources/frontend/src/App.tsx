@@ -32,22 +32,6 @@ function LandingPage() {
           <Message />
         </div>
 
-        {/* Upload button — centred above the footer */}
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50">
-          <a
-            href="/upload"
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
-                       text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-colors
-                       text-sm sm:text-base"
-          >
-            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M12 16v-8m0 0-3 3m3-3 3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1" />
-            </svg>
-            Upload File
-          </a>
-        </div>
-
         {/* Footer at bottom */}
         <Footer />
       </div>

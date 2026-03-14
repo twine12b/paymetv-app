@@ -1,22 +1,17 @@
 package com.paymetv.app.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @AllArgsConstructor @NoArgsConstructor
 @Entity
-@Getter @Setter
+@Getter @Setter @ToString
+@Table(name = "users")
 public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
     private String username;
     private String password;
     private String email;

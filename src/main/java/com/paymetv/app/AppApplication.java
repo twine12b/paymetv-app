@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 
 @SpringBootApplication
 @EntityScan(basePackages = "com.paymetv.app.domain")
-@RestController
+//@RestController
 @Tag(name = "PayMeTV API", description = "REST API for PayMeTV application with item management and metrics")
 public class AppApplication implements WebMvcConfigurer {
 
