@@ -55,6 +55,8 @@ class JsonPayloadCreatorServiceTest {
         test_user.setPassword("password");
         test_user.setEmail("test@test.com");
 
+        test_image_face = new ImageFace(99L, "test_front_aspect.png", artifact);
+
         artifact = new Artifact();
         artifact.setId(68L);
         artifact.setName("test artifact name");
@@ -64,11 +66,7 @@ class JsonPayloadCreatorServiceTest {
         artifact.setImage_faces(test_image_face);
         artifact.setStatus(true);
 
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", artifact);
-
-
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", artifact);
-
+        test_image_face.setArtifact(artifact);
 
         expected_artifact_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));
         expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));
@@ -82,12 +80,6 @@ class JsonPayloadCreatorServiceTest {
         Object object = artifact;
 
         JsonNode actual = jsonPayloadCreatorService.createJsonNode(object);
-
-
-        // TODO: this need to be a generic class in the artifactService
-        System.out.println(actual.get("image_faces"));
-        System.out.println(actual.get("image_faces").get("artifact_id"));
-        System.out.println(actual.get("image_faces").get("front_aspect"));
 
         assertNotNull(actual);
         assertEquals(prettyPrintJsonString(expected_artifact_json), prettyPrintJsonString(actual));

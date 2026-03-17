@@ -1,27 +1,17 @@
 package com.paymetv.repository;
 
-import com.paymetv.app.AppApplication;
 import com.paymetv.app.domain.Users;
 import com.paymetv.app.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.test.context.ContextConfiguration;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 
-//@SpringBootApplication(scanBasePackages = "com.paymetv.app")
-//@ContextConfiguration(classes = AppApplication.class)
-//@ComponentScan(basePackages = "com.paymetv.app")
+
 @DataJpaTest
 @Tag("UserRepositoryTest")
 public class UserRepositoryTest {

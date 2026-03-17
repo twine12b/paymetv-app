@@ -1,6 +1,7 @@
 package com.paymetv.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymetv.app.AppApplication;
 import com.paymetv.app.domain.Artifact;
 import com.paymetv.app.domain.ImageFace;
@@ -11,14 +12,11 @@ import com.paymetv.app.service.ProducerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,7 +35,7 @@ import static org.mockito.Mockito.doNothing;
 @SpringBootTest(classes = AppApplication.class)
 public class ArtifactServiceTest {
 
-    @Mock
+    @MockitoBean
     private ProducerService producerService;
 
     @Autowired
