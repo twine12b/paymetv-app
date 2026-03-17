@@ -7,7 +7,6 @@ import com.paymetv.app.AppApplication;
 import com.paymetv.app.domain.Artifact;
 import com.paymetv.app.domain.ImageFace;
 import com.paymetv.app.domain.Users;
-import com.paymetv.app.repository.UserRepository;
 import com.paymetv.app.service.JsonPayloadCreatorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,16 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-//@ContextConfiguration(classes = AppApplication.class)
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @SpringBootTest(classes = AppApplication.class)
 @AutoConfigureMockMvc
 class JsonPayloadCreatorServiceTest {
@@ -49,13 +45,13 @@ class JsonPayloadCreatorServiceTest {
 
     @BeforeEach
     void setup() throws IOException {
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", 68);
-
         test_user = new Users();
         test_user.setId(110L);
         test_user.setUsername("test user");
         test_user.setPassword("password");
         test_user.setEmail("test@test.com");
+
+        test_image_face = new ImageFace(99L, "test_front_aspect.png", artifact);
 
         artifact = new Artifact();
         artifact.setId(68L);
@@ -63,8 +59,9 @@ class JsonPayloadCreatorServiceTest {
         artifact.setDescription("test Description");
         artifact.setUser(test_user);
         artifact.setModel("some_test_model stored as string");
-        artifact.setImage_faces(test_image_face);
         artifact.setStatus(true);
+
+        test_image_face.setArtifact(artifact);
 
         expected_artifact_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));
         expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));
@@ -78,12 +75,6 @@ class JsonPayloadCreatorServiceTest {
         Object object = artifact;
 
         JsonNode actual = jsonPayloadCreatorService.createJsonNode(object);
-
-
-        // TODO: this need to be a generic class in the artifactService
-        System.out.println(actual.get("image_faces"));
-        System.out.println(actual.get("image_faces").get("artifact_id"));
-        System.out.println(actual.get("image_faces").get("front_aspect"));
 
         assertNotNull(actual);
         assertEquals(prettyPrintJsonString(expected_artifact_json), prettyPrintJsonString(actual));

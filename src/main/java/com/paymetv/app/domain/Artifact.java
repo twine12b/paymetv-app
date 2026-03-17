@@ -1,12 +1,13 @@
 package com.paymetv.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 @Entity
-@Getter @Setter @ToString
 @Table(name = "artifact")
 public class Artifact {
     @Id
@@ -16,8 +17,9 @@ public class Artifact {
     private String description;
     private String model; // ML Model once trained
 
-    @OneToOne
-    private ImageFace image_faces;
+//    @OneToOne
+//    @JsonManagedReference
+//    private ImageFace image_faces;
 
     @ManyToOne
     private Users user;
