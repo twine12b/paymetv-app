@@ -1,5 +1,6 @@
 package com.paymetv.app.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -21,6 +22,7 @@ public class ImageFace {
 
     @ManyToOne
     @JoinColumn(name = "artifact_id", nullable = false)
+    @JsonBackReference
     private Artifact artifact;
 
     //    @NotNull
