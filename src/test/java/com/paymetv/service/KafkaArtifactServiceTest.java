@@ -36,7 +36,10 @@ public class KafkaArtifactServiceTest {
     private JsonNode expected_product_json;
     private JsonNode expected_user_json;
 
-    private Artifact product;
+    @Autowired
+    private Artifact artifact;
+
+    @Autowired
     private Users test_user;
 
     @Test
@@ -53,12 +56,12 @@ public class KafkaArtifactServiceTest {
         test_user.setPassword("password");
         test_user.setEmail("test@test.com");
 
-        product = new Artifact();
-        product.setId(68L);
-        product.setName("test product name");
-        product.setDescription("test Description");
-        product.setUser(test_user);
-        product.setStatus(true);
+        artifact = new Artifact();
+        artifact.setId(68L);
+        artifact.setName("test product name");
+        artifact.setDescription("test Description");
+        artifact.setUser(test_user);
+        artifact.setStatus(true);
 
         expected_product_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));
         expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));
@@ -70,7 +73,7 @@ public class KafkaArtifactServiceTest {
         // Gather data to send
         String filename = "product_test.json";
         String topicName = "ml_streaming";
-        Object object = product;
+        Object object = artifact;
         JsonNode payload = jsonPayloadCreatorService.createJsonNode(object);
 
         // Publish message

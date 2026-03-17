@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -23,13 +24,14 @@ import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 
-@ContextConfiguration(classes = AppApplication.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
+//@ContextConfiguration(classes = AppApplication.class)
+@SpringBootApplication(scanBasePackages = "com.paymetv.app")
+//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+//@AutoConfigureMockMvc
 public class ArtifactServiceTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+//    @Autowired
+//    private MockMvc mockMvc;
 
     @Autowired
     private ProducerService producerService;
@@ -52,8 +54,9 @@ public class ArtifactServiceTest {
     @BeforeEach
     public void setup() throws IOException {
         test_user = new Users(110L, "test user", "password", "test@test.com");
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", 68);
         test_artifact = new Artifact(68L, "test product name", "test Description", "some_test_model stored as string", test_image_face,test_user, true);
+        test_image_face = new ImageFace(99L, "test_front_aspect.png", test_artifact);
+
 
         expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));
         expected_artifact_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));

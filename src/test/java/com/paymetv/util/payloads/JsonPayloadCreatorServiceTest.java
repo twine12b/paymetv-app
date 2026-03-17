@@ -49,8 +49,6 @@ class JsonPayloadCreatorServiceTest {
 
     @BeforeEach
     void setup() throws IOException {
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", 68);
-
         test_user = new Users();
         test_user.setId(110L);
         test_user.setUsername("test user");
@@ -65,6 +63,12 @@ class JsonPayloadCreatorServiceTest {
         artifact.setModel("some_test_model stored as string");
         artifact.setImage_faces(test_image_face);
         artifact.setStatus(true);
+
+        test_image_face = new ImageFace(99L, "test_front_aspect.png", artifact);
+
+
+        test_image_face = new ImageFace(99L, "test_front_aspect.png", artifact);
+
 
         expected_artifact_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));
         expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));

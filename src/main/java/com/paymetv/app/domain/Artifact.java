@@ -3,10 +3,10 @@ package com.paymetv.app.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 @Entity
-@Getter @Setter @ToString
 @Table(name = "artifact")
 public class Artifact {
     @Id

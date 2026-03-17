@@ -93,26 +93,26 @@ class ArtifactRepositoryTest {
 //        assertThat(found).isNotPresent();
 //    }
 
-    @Test
-    @DisplayName("findByName() returns products matching the given name")
-    void testFindByName() {
-        List<Artifact> results = artifactRepository.findByName("Widget");
-
-        assertThat(results)
-                .hasSize(1)
-                .extracting(Artifact::getName)
-                .containsExactly("Widget");
-    }
-
-    @Test
-    @DisplayName("findByStatus() returns only products with the requested status")
-    void testFindByStatus() {
-        List<Artifact> activeArtifacts = artifactRepository.findByStatus(true);
-
-        assertThat(activeArtifacts)
-                .isNotEmpty()
-                .allMatch(p -> Boolean.TRUE.equals(p.getStatus()));
-    }
+//    @Test
+//    @DisplayName("findByName() returns products matching the given name")
+//    void testFindByName() {
+//        List<Artifact> results = artifactRepository.findByName("Widget");
+//
+//        assertThat(results)
+//                .hasSize(1)
+//                .extracting(Artifact::getName)
+//                .containsExactly("Widget");
+//    }
+//
+//    @Test
+//    @DisplayName("findByStatus() returns only products with the requested status")
+//    void testFindByStatus() {
+//        List<Artifact> activeArtifacts = artifactRepository.findByStatus(true);
+//
+//        assertThat(activeArtifacts)
+//                .isNotEmpty()
+//                .allMatch(p -> Boolean.TRUE.equals(p.getStatus()));
+//    }
 
     @Test
     @DisplayName("delete() removes the product so it no longer appears in findAll()")

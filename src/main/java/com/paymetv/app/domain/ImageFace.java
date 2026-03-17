@@ -4,19 +4,27 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-@NoArgsConstructor  @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
-@Getter @Setter @ToString
 @Table(name = "image_face")
 public class ImageFace {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @NonNull
+    @Column(name = "front", nullable = false)
     private String front;
-    @NotNull
-    private int artifact_id;
+
+    @ManyToOne
+    @JoinColumn(name = "artifact_id", nullable = false)
+    private Artifact artifact;
+
+    //    @NotNull
+//    private int artifact_id;
 //    @NonNull
 //    private String back_aspect;
 //    @NonNull
@@ -27,7 +35,4 @@ public class ImageFace {
 //    private String top_aspect;
 //    @NonNull
 //    private String bottom_aspect;
-
-//    @NonNull @OneToOne
-//    private Artifact product;
 }

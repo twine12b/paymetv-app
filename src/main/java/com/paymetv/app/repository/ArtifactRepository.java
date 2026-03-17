@@ -13,14 +13,14 @@ import java.util.Optional;
  * Custom query methods can be added here using Spring Data's derived-query
  * naming convention or with explicit {@code @Query} annotations.</p>
  */
-public interface ArtifactRepository extends JpaRepository<Artifact, Integer> {
+public interface ArtifactRepository extends JpaRepository<Artifact, Long> {
 
-    // Derived query: SELECT p FROM Artifact p WHERE p.name = :name
-    List<Artifact> findByName(String name);
-
-    // Derived query: SELECT p FROM Artifact p WHERE p.status = :status
-    List<Artifact> findByStatus(Boolean status);
-
-    Optional<Artifact> findById(Long id);
+//    // Derived query: SELECT p FROM Artifact p WHERE p.name = :name
+//    List<Artifact> findByName(String name);
+//
+//    // Derived query: SELECT p FROM Artifact p WHERE p.status = :status
+//    List<Artifact> findByStatus(Boolean status);
+//
+//    Optional<Artifact> findById(Long id);
 }
 

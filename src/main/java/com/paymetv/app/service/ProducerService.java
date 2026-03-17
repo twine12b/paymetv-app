@@ -1,12 +1,10 @@
 package com.paymetv.app.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
 
-//@Service
-@Configuration
+@Service
 public class ProducerService {
 
     @Autowired
