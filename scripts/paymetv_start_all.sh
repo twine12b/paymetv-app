@@ -9,6 +9,7 @@ streaming_dir="../src/main/resources/streaming"
 database_dir="../src/main/resources/database"
 monitoring_dir="../src/main/resources/prometheus"
 kafka_dir="../src/main/resources/kafka"
+frontend_dir="../src/main/resources/frontend"
 ENVIRONMENT=$1
 
 # Colors - TODO move to common script
@@ -38,7 +39,15 @@ echo -e "${GREEN}✓ PayMeTV Starting All Deployments${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
-# Step 0: Starting Kafka app (Paymetv dependes on it)
+# Step 1: building frontend
+echo -e "${YELLOW}Step 0: Building frontend...${NC}"
+pushd $frontend_dir > /dev/null
+./frontend_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Frontend built${NC}"
+echo ""
+
+# Step 2: Starting Kafka app (Paymetv dependes on it)
 kubectl config set-context --current --namespace=${NAMESPACE-kafka}
 echo -e "${YELLOW}Step 5: Starting Kafka app...${NC}"
 pushd $kafka_dir > /dev/null
@@ -47,7 +56,7 @@ popd > /dev/null
 echo -e "${GREEN}✓ Kafka app started${NC}"
 echo ""
 
-# Step1: Starting Paymetv app
+# Step 3: Starting Paymetv app
 echo -e "${YELLOW}Step 1: Starting Paymetv app...${NC}"
 echo -e "${YELLOW}Setting namespace to ${NAMESPACE-default}...${NC}"
 kubectl config set-context --current --namespace=${NAMESPACE-default}
@@ -61,7 +70,7 @@ popd > /dev/null
 echo -e "${GREEN}✓ Paymetv app started${NC}"
 echo ""
 
-# Step2: Starting Streaming app
+# Step 4: Starting Streaming app
 echo -e "${YELLOW}Step 2: Starting Streaming app...${NC}"
 kubectl config set-context --current --namespace=${NAMESPACE-streaming}
 pushd $streaming_dir > /dev/null
@@ -70,7 +79,7 @@ popd > /dev/null
 echo -e "${GREEN}✓ Streaming app started${NC}"
 echo ""
 
-# Step3: Starting Database app
+# Step 5: Starting Database app
 kubectl config set-context --current --namespace=${NAMESPACE-database}
 echo -e "${YELLOW}Step 3: Starting Database app...${NC}"
 pushd $database_dir > /dev/null
@@ -79,7 +88,7 @@ popd > /dev/null
 echo -e "${GREEN}✓ Database app started${NC}"
 echo ""
 
-# Step4: Starting Monitoring app
+# Step 6: Starting Monitoring app
 kubectl config set-context --current --namespace=${NAMESPACE-monitoring}
 echo -e "${YELLOW}Step 4: Starting Monitoring app...${NC}"
 pushd $monitoring_dir > /dev/null
