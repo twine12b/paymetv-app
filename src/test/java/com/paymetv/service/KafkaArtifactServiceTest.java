@@ -89,7 +89,7 @@ public class KafkaArtifactServiceTest {
         artifact.setDescription("test Description");
         artifact.setModel("test_model");
         artifact.setUser(test_user);
-        artifact.setImage_faces(test_image_face);
+//        artifact.setImage_faces(test_image_face);
         artifact.setStatus(true);
 
         // Set bidirectional relationship

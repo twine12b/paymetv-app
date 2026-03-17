@@ -45,7 +45,7 @@ class ArtifactRepositoryTest {
         gadget.setName("Gadget");
         gadget.setDescription("A handy gadget");
         gadget.setModel("Some model after successful training");
-        gadget.setImage_faces(imageFaces);
+//        gadget.setImage_faces(imageFaces);
         gadget.setStatus(false);
         entityManager.persistAndFlush(gadget);
     }

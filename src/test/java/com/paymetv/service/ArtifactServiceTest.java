@@ -70,7 +70,7 @@ public class ArtifactServiceTest {
         test_user = new Users(110L, "test user", "password", "test@test.com");
         test_image_face = new ImageFace(99L, "test_front_aspect.png", null);
         test_artifact = new Artifact(68L, "test product name", "test Description",
-                "some_test_model stored as string", test_image_face, test_user, true);
+                "some_test_model stored as string", test_user, true);
 
         // Set the artifact reference in image_face (bidirectional relationship)
         test_image_face.setArtifact(test_artifact);

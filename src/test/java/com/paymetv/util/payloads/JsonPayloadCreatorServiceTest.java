@@ -7,7 +7,6 @@ import com.paymetv.app.AppApplication;
 import com.paymetv.app.domain.Artifact;
 import com.paymetv.app.domain.ImageFace;
 import com.paymetv.app.domain.Users;
-import com.paymetv.app.repository.UserRepository;
 import com.paymetv.app.service.JsonPayloadCreatorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,16 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-//@ContextConfiguration(classes = AppApplication.class)
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @SpringBootTest(classes = AppApplication.class)
 @AutoConfigureMockMvc
 class JsonPayloadCreatorServiceTest {
@@ -63,7 +59,6 @@ class JsonPayloadCreatorServiceTest {
         artifact.setDescription("test Description");
         artifact.setUser(test_user);
         artifact.setModel("some_test_model stored as string");
-        artifact.setImage_faces(test_image_face);
         artifact.setStatus(true);
 
         test_image_face.setArtifact(artifact);

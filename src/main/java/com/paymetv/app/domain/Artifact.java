@@ -17,9 +17,9 @@ public class Artifact {
     private String description;
     private String model; // ML Model once trained
 
-    @OneToOne
-    @JsonManagedReference
-    private ImageFace image_faces;
+//    @OneToOne
+//    @JsonManagedReference
+//    private ImageFace image_faces;
 
     @ManyToOne
     private Users user;
