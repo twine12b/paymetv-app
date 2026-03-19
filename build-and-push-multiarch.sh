@@ -6,7 +6,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m' # No Color 2ww
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}PayMeTV Multi-Architecture Build Script${NC}"
