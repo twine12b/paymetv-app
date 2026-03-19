@@ -1,6 +1,5 @@
 package com.paymetv.app.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,10 +15,6 @@ public class Artifact {
     private String name;
     private String description;
     private String model; // ML Model once trained
-
-//    @OneToOne
-//    @JsonManagedReference
-//    private ImageFace image_faces;
 
     @ManyToOne
     private Users user;

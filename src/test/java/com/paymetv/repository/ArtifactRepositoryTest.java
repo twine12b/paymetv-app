@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DataJpaTest
 @Tag("ArtifactRepositoryTests")
-class ArtifactRepositoryTest {
+public class ArtifactRepositoryTest {
     @Autowired
     private ArtifactRepository artifactRepository;
 

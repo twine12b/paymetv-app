@@ -1,5 +1,7 @@
 package com.paymetv;
 
+import org.junit.platform.suite.api.SelectPackages;
+import org.junit.platform.suite.api.SuiteDisplayName;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
@@ -23,13 +25,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Test methods, or any other test logic. It exists solely as a configuration anchor
  * for Spring Boot's test context bootstrapping.</p>
  */
+@org.junit.platform.suite.api.Suite
+@SelectPackages({"com.paymetv.repository", "com.paymetv.service", "com.paymetv.util"})
+@SuiteDisplayName("PMTV Test Suite")
 @SpringBootApplication(scanBasePackages = "com.paymetv.app")
 public class TestApplication {
-    // No main() needed – this class is only used as a configuration anchor
-    // by @DataJpaTest / @WebMvcTest / etc. running under com.paymetv.*
-
-    // DO NOT add @Autowired fields here
-    // DO NOT add @Test methods here
-    // This is a configuration class only
 }
 
