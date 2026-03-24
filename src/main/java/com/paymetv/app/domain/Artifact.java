@@ -5,6 +5,7 @@ import lombok.*;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
+@ToString
 @Builder
 @Entity
 @Table(name = "artifact")

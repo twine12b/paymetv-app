@@ -74,7 +74,7 @@ public class UserRepositoryTest {
 
     @Test
     @Order(6)
-    @Rollback(value = false)
+    @Rollback(false)
     @DisplayName("delete user")
     void testDeleteUser() {
         userRepository.deleteById(1L);

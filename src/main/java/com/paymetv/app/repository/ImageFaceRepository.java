@@ -5,7 +5,6 @@ import com.paymetv.app.domain.ImageFace;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import java.util.List;
 import java.util.Optional;
 
 @EnableJpaRepositories(basePackages = "com.paymetv.app.repository")
