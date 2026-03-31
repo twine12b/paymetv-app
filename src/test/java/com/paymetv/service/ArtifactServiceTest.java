@@ -68,9 +68,14 @@ public class ArtifactServiceTest {
     public void setup() throws IOException {
         // Create test entities
         test_user = new Users(110L, "test user", "password", "test@test.com");
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", null);
+
         test_artifact = new Artifact(68L, "test product name", "test Description",
                 "some_test_model stored as string", test_user, true);
+
+        test_image_face = new ImageFace(99L, "test_front_aspect.png", "test_back_aspect.png",
+                "test_left_aspect.png", "test_right_aspect.png", "test_top_aspect.png",
+                "test_bottom_aspect.png", test_artifact);
+
 
         // Set the artifact reference in image_face (bidirectional relationship)
         test_image_face.setArtifact(test_artifact);

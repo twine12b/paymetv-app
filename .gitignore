@@ -17,5 +17,7 @@
 .idea/compiler.xml
 src/main/resources/kafka/node_modules/
 uploads/
+src/main/resources/database/.portforward.pid
+src/main/resources/database/schema.sql
 
 

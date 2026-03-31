@@ -14,13 +14,10 @@ import java.util.Optional;
  * naming convention or with explicit {@code @Query} annotations.</p>
  */
 public interface ArtifactRepository extends JpaRepository<Artifact, Long> {
+    Optional<Artifact> findByName(String testArtifact);
 
-//    // Derived query: SELECT p FROM Artifact p WHERE p.name = :name
-//    List<Artifact> findByName(String name);
-//
-//    // Derived query: SELECT p FROM Artifact p WHERE p.status = :status
-//    List<Artifact> findByStatus(Boolean status);
-//
-//    Optional<Artifact> findById(Long id);
+    Optional<Artifact> findByDescription(String testDescription);
+
+    List<Artifact> findByStatus(boolean b);
 }
 
