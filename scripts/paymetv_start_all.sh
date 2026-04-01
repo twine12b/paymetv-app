@@ -40,6 +40,7 @@ echo -e "${BLUE}=========================================${NC}"
 echo ""
 
 # Step 1: building frontend
+kubectl config set-context --current --namespace=${NAMESPACE-default}
 echo -e "${YELLOW}Step 0: Building frontend...${NC}"
 pushd $frontend_dir > /dev/null
 ./frontend_startup.sh

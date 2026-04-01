@@ -5,7 +5,6 @@ import com.paymetv.app.repository.ArtifactRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.annotation.Rollback;
 
 import java.util.List;
 
@@ -19,24 +18,34 @@ public class ArtifactRepositoryTest {
     @Autowired
     private ArtifactRepository artifactRepository;
 
+    // Holds the artifact created by @BeforeEach for use in each test method.
+    // Because @DataJpaTest wraps every test in its own transaction that rolls back
+    // after the method completes, each test always starts with a clean database –
+    // no rows ever accumulate across methods or test classes.
+    private Artifact savedArtifact;
+
+    @BeforeEach
+    void setUp() {
+        savedArtifact = artifactRepository.save(
+                Artifact.builder()
+                        .name("test artifact")
+                        .description("test description")
+                        .model("test model")
+                        .status(true)
+                        .build()
+        );
+    }
+
     @Test
     @DisplayName("context loads the ArtifactRepository bean")
     void testContextLoads() { }
 
     @Test
     @Order(1)
-    @Rollback(false)
     @DisplayName("save artifact and find by id")
     void testSaveAndFindById() {
-        Artifact artifact = Artifact.builder()
-                .name("test artifact")
-                .description("test description")
-                .model("test model")
-                .status(true)
-                .build();
-
-        artifactRepository.save(artifact);
-        assertThat(artifact.getId()).isGreaterThan(0);
+        // savedArtifact was already persisted by @BeforeEach inside this transaction.
+        assertThat(savedArtifact.getId()).isGreaterThan(0);
     }
 
     @Test
@@ -51,16 +60,22 @@ public class ArtifactRepositoryTest {
     @Order(3)
     @DisplayName("find artifact by name")
     void testFindByName() {
-        Artifact artifact = artifactRepository.findByName("test artifact").get();
-        assertThat(artifact).isNotNull();
+        // Exactly one artifact with this name exists (the one from @BeforeEach).
+        // Using orElseThrow() instead of get() gives a clearer failure message
+        // if the Optional is unexpectedly empty.
+        Artifact artifact = artifactRepository.findByName("test artifact").orElseThrow();
+        assertThat(artifact.getName()).isEqualTo("test artifact");
     }
 
     @Test
     @Order(4)
-    @DisplayName("Find artifact by description")
+    @DisplayName("find artifact by description")
     void testFindByDescription() {
-        Artifact artifact = artifactRepository.findByDescription("test description").get();
-        assertThat(artifact).isNotNull();
+        // Exactly one artifact with this description exists (the one from @BeforeEach).
+        // findByDescription() returns Optional<Artifact>; calling orElseThrow() is
+        // both safer and correct – no .stream().findAny() wrapper needed.
+        Artifact artifact = artifactRepository.findByDescription("test description").orElseThrow();
+        assertThat(artifact.getDescription()).isEqualTo("test description");
     }
 
     @Test
