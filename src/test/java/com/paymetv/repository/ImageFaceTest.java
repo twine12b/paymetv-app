@@ -59,21 +59,20 @@ public class ImageFaceTest {
         Long savedId = imageFace.getId();
 
         // Find by the auto-generated ID
-        Optional<ImageFace> foundOptional = imageFaceRepository.findById(savedId);
+        ImageFace foundOptional = imageFaceRepository.getReferenceById(savedId);
 
         // Assert the entity was found
-        assertTrue(foundOptional.isPresent(), "ImageFace should be found by ID");
-        ImageFace foundImageFace = foundOptional.get();
+        assertNotNull(foundOptional);
 
-        assertNotNull(foundImageFace);
-        assertEquals(savedId, foundImageFace.getId());
-        assertEquals("front_image.png", foundImageFace.getFront());
-        assertEquals("back_image.png", foundImageFace.getBack());
-        assertEquals("left_image.png", foundImageFace.getLeft());
-        assertEquals("right_image.png", foundImageFace.getRight());
-        assertEquals("top_image.png", foundImageFace.getTop());
-        assertEquals("bottom_image.png", foundImageFace.getBottom());
-        assertEquals(artifact.getId(), foundImageFace.getArtifact().getId());
+        assertNotNull(foundOptional);
+        assertEquals(savedId, foundOptional.getId());
+        assertEquals("front_image.png", foundOptional.getFront());
+        assertEquals("back_image.png", foundOptional.getBack());
+        assertEquals("left_image.png", foundOptional.getLeft());
+        assertEquals("right_image.png", foundOptional.getRight());
+        assertEquals("top_image.png", foundOptional.getTop());
+        assertEquals("bottom_image.png", foundOptional.getBottom());
+        assertEquals(artifact.getId(), foundOptional.getArtifact().getId());
     }
 
     @Test
