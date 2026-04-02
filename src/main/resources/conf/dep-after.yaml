@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: paymetv-app
-          image: paymetv/paymetv-app:latest # Replace with your actual Docker image
+          image: paymetv/paymetv-app:none
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
               name: http
