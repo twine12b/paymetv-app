@@ -11,7 +11,7 @@ The Docker image `paymetv/paymetv-app:latest` was built on Windows AMD64, but th
 **Changes Made:**
 - Removed `nodeSelector: kubernetes.io/arch: arm64` from `src/main/resources/conf/dep-before.yaml`
 - Removed `nodeSelector: kubernetes.io/arch: arm64` from `src/main/resources/conf/dep-after.yaml`
-- Added `imagePullPolicy: IfNotPresent` to both files
+- Added `imagePullPolicy: Always` to both files
 
 **What this means:**
 - Your existing AMD64 image will now work on your cluster
@@ -113,7 +113,7 @@ spec:
   containers:
     - name: paymetv-app
       image: paymetv/paymetv-app:latest
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
 ```
 
 The ARM64 nodeSelector has been removed, allowing the AMD64 image to run on your cluster.
