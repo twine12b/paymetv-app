@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: paymetv-app
-          image: paymetv/paymetv-app:none
+          image: paymetv/paymetv-app:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
