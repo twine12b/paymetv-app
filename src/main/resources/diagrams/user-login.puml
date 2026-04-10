@@ -1,0 +1,26 @@
+@startuml User Login
+skinparam style strictuml
+skinparam SequenceMessageAlign center
+
+actor "User" as user
+participant "Login Page" as loginPage
+participant "Authentication Service" as authService
+participant "Database" as database
+
+loop Up to 3 login attempts
+    user -> loginPage: Enter username and password
+    loginPage -> authService: Send credentials
+    authService -> database: Query user credentials
+    database --> authService: Return user data
+
+    alt Valid credentials
+        authService --> loginPage: Authentication success
+        loginPage --> user: Redirect to dashboard
+        break
+    else Invalid credentials
+        authService --> loginPage: Authentication failed
+        loginPage --> user: Show error message
+    end
+end
+
+@enduml
