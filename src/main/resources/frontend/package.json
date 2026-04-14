@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && npm run copy-login",
-    "copy-login": "cp src/login.html ../static/login.html",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
