@@ -39,7 +39,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
+})
 @EntityScan(basePackages = "com.paymetv.app.domain")
 //@RestController
 @Tag(name = "PayMeTV API", description = "REST API for PayMeTV application with item management and metrics")
