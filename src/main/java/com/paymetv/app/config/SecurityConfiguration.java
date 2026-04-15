@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -74,6 +75,9 @@ public class SecurityConfiguration {
                 .anyRequest().authenticated()
             )
             .csrf(csrf -> csrf
+                // Use cookie-based CSRF tokens for static HTML forms (e.g., login.html)
+                // This allows JavaScript to read the token from cookies
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 // Disable CSRF for REST API endpoints (stateless, token-based)
                 // CSRF protection remains enabled for web forms
                 .ignoringRequestMatchers(
@@ -82,9 +86,9 @@ public class SecurityConfiguration {
                 )
             )
             .formLogin((form) -> form
-//                .loginPage("/login.html")                    // Custom login page
-//                .loginProcessingUrl("/login")                // Where to POST the form
-//                .defaultSuccessUrl("/upload", true)          // Redirect after login
+                .loginPage("/login.html")                    // Custom login page
+                .loginProcessingUrl("/login")                // Where to POST the form
+                .defaultSuccessUrl("/upload", true)          // ✅ Redirect after successful login
                 .failureUrl("/login.html?error=true")        // Redirect on failure
                 .permitAll()
             )
