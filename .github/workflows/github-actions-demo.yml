@@ -1,6 +1,25 @@
 name: GitHub Actions Demo
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
+
+# Workflow permissions
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
+# Prevent concurrent builds on the same ref
+concurrency:
+  group: paymetv-${{ github.ref }}
+  cancel-in-progress: true
+
+# Global environment variables
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+  MAVEN_OPTS: '-Xmx1024m'
+  
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
