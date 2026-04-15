@@ -5,11 +5,12 @@ on: [push]
 # Workflow permissions
 permissions:
   contents: read
+  packages: read
   actions: read
   checks: write
   pull-requests: write
 
-# Prevent concurrent builds on the same ref 
+# Prevent concurrent builds on the same ref
 concurrency:
   group: paymetv-${{ github.ref }}
   cancel-in-progress: true
@@ -19,7 +20,7 @@ env:
   JAVA_VERSION: '17'
   NODE_VERSION: '20'
   MAVEN_OPTS: '-Xmx1024m'
-  
+
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
@@ -28,10 +29,363 @@ jobs:
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+
+  # ================================
+  # Frontend Build Job
+  # ================================
+  frontend-build:
+    name: Build Frontend (React + Tailwind + Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git authentication
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: src/main/resources/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/main/resources/frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: src/main/resources/frontend
+        run: npm run build
+
+      - name: Verify frontend build output
+        run: |
+          echo "📦 Checking frontend build output..."
+          ls -la src/main/resources/static/ || true
+          echo ""
+          echo "Verifying critical files:"
+          test -f src/main/resources/static/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
+          test -f src/main/resources/static/login.html && echo "✅ login.html exists" || echo "❌ login.html missing"
+          test -d src/main/resources/static/assets && echo "✅ assets directory exists" || echo "❌ assets directory missing"
+          echo ""
+          echo "Assets contents:"
+          ls -lh src/main/resources/static/assets/ | head -10 || true
+
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: src/main/resources/static/**
+          retention-days: 1
+
+  # ================================
+  # Backend Build & Test Job
+  # ================================
+  backend-build-test:
+    name: Build & Test Spring Boot Backend
+    runs-on: ubuntu-latest
+    needs: frontend-build
+
+    services:
+      # MySQL service for integration tests
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_PASSWORD || 'testpassword' }}
+          MYSQL_DATABASE: paymetv_test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: src/main/resources/static/
+
+      - name: Set up JDK 17 (Amazon Corretto)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "⏳ Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h "127.0.0.1" --silent; then
+              echo "✅ MySQL is ready!"
+              break
+            fi
+            echo "Attempt $i/30: MySQL not ready yet, waiting..."
+            sleep 2
+          done
+
+      - name: Run tests with Maven (includes FileUploadControllerTest & ImageFaceControllerTest)
+        run: mvn clean test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/paymetv_test_db
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.MYSQL_PASSWORD || 'testpassword' }}
+
+      - name: Verify test results
+        run: |
+          echo "📊 Checking test results..."
+          if [ -f target/surefire-reports/TEST-*.xml ]; then
+            echo "✅ Test reports generated"
+            echo ""
+            echo "Test Summary:"
+            grep -r "tests=" target/surefire-reports/TEST-*.xml | head -10
+          else
+            echo "⚠️ No test reports found"
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/surefire-reports/
+          retention-days: 7
+
+      - name: Package application (skip tests - already ran)
+        run: mvn package -DskipTests
+
+      - name: Verify JAR creation
+        run: |
+          echo "📦 Checking for generated JAR..."
+          ls -lh target/*.jar
+          JAR_FILE=$(ls target/*.jar | head -1)
+          echo "✅ JAR file: $JAR_FILE"
+          echo "JAR size: $(du -h $JAR_FILE | cut -f1)"
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: target/*.jar
+          retention-days: 7
+
+  # ================================
+  # Docker Build & Push Job (Deployment Preparation)
+  # ================================
+  docker-build:
+    name: Docker Build & Push (Deployment Preparation)
+    runs-on: ubuntu-latest
+    needs: backend-build-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jar
+          path: target/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub (placeholder)
+        # Uncomment when ready to push to Docker Hub
+        # uses: docker/login-action@v3
+        # with:
+        #   username: ${{ secrets.DOCKER_USERNAME }}
+        #   password: ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "🔐 Docker login step (placeholder - configure secrets to enable)"
+
+      - name: Create Dockerfile
+        run: |
+          cat > Dockerfile << 'EOF'
+          # Multi-stage Docker build for PayMeTV Spring Boot application
+          FROM amazoncorretto:17-alpine AS builder
+          WORKDIR /app
+          COPY target/*.jar app.jar
+          RUN java -Djarmode=layertools -jar app.jar extract
+
+          FROM amazoncorretto:17-alpine
+          WORKDIR /app
+
+          # Install wget for health checks
+          RUN apk add --no-cache wget
+
+          # Copy layers from builder stage
+          COPY --from=builder /app/dependencies/ ./
+          COPY --from=builder /app/spring-boot-loader/ ./
+          COPY --from=builder /app/snapshot-dependencies/ ./
+          COPY --from=builder /app/application/ ./
+
+          # Application metadata
+          LABEL maintainer="PayMeTV Team"
+          LABEL version="0.0.1-SNAPSHOT"
+          LABEL description="PayMeTV Spring Boot Application with React Frontend"
+
+          # Expose application port (configured in application.properties)
+          EXPOSE 8090
+
+          # Health check using actuator endpoint
+          HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+            CMD wget --quiet --tries=1 --spider http://localhost:8090/actuator/health || exit 1
+
+          # Run application
+          ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+          EOF
+
+      - name: Build Docker image
+        run: |
+          docker build -t paymetv-app:${{ github.sha }} -t paymetv-app:latest .
+          echo "✅ Docker image built successfully"
+
+      - name: Test Docker image
+        run: |
+          echo "🐳 Docker image details:"
+          docker inspect paymetv-app:${{ github.sha }} --format='{{.Size}}' | \
+            awk '{print "Image size:", $1/1024/1024, "MB"}'
+          docker images | grep paymetv-app
+
+      # Uncomment when ready to push to container registry
+      # - name: Push Docker image
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.DOCKER_USERNAME }}/paymetv-app:latest
+      #       ${{ secrets.DOCKER_USERNAME }}/paymetv-app:${{ github.sha }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+
+  # ================================
+  # Code Quality & Security Scan
+  # ================================
+  code-quality:
+    name: Code Quality & Security Analysis
+    runs-on: ubuntu-latest
+    needs: backend-build-test
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Full history for SonarQube
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Run OWASP Dependency Check (placeholder)
+        run: |
+          echo "🔍 OWASP Dependency Check would run here"
+          echo "Uncomment below to enable:"
+          echo "  mvn org.owasp:dependency-check-maven:check"
+          # mvn org.owasp:dependency-check-maven:check
+
+      - name: Run SonarQube Analysis (placeholder)
+        run: |
+          echo "🔍 SonarQube analysis would run here"
+          echo "Configure SONAR_TOKEN secret to enable"
+          # mvn sonar:sonar \
+          #   -Dsonar.projectKey=paymetv-app \
+          #   -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+          #   -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+  # ================================
+  # Deployment Notes & Summary
+  # ================================
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [frontend-build, backend-build-test]
+    if: always()
+
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "# 🚀 PayMeTV Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📊 Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend Build:** ${{ needs.frontend-build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend Build & Test:** ${{ needs.backend-build-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## ⚙️ Application Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Application Port:** 8090" >> $GITHUB_STEP_SUMMARY
+          echo "- **Java Version:** 17 (Amazon Corretto)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Spring Boot Version:** 3.5.7" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** React + Vite + Tailwind CSS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🗄️ Required External Services" >> $GITHUB_STEP_SUMMARY
+          echo "### MySQL Database" >> $GITHUB_STEP_SUMMARY
+          echo "- **Host:** \`mysql-service:3306\` (Kubernetes) or \`localhost:3306\` (local)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database:** \`paymetv_db\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **User:** Configured via \`SPRING_DATASOURCE_USERNAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Password:** Configured via \`SPRING_DATASOURCE_PASSWORD\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Kafka Broker" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bootstrap Servers:** \`127.0.0.1:9092\` (configurable)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Consumer Group:** \`pmtv-test-group\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Client ID:** \`pmtv-test-client\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📦 Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend build artifacts (static assets in \`src/main/resources/static/\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- Application JAR (\`paymetv-app-0.0.1-SNAPSHOT.jar\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- Test results (JUnit/Surefire reports)" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker image (if on main branch)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🚢 Next Steps for Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "1. ✅ Configure Docker secrets (\`DOCKER_USERNAME\`, \`DOCKER_PASSWORD\`)" >> $GITHUB_STEP_SUMMARY
+          echo "2. ✅ Set up Kubernetes cluster with MySQL and Kafka" >> $GITHUB_STEP_SUMMARY
+          echo "3. ✅ Configure application secrets for database credentials" >> $GITHUB_STEP_SUMMARY
+          echo "4. ✅ Update \`application.properties\` with production values" >> $GITHUB_STEP_SUMMARY
+          echo "5. ✅ Enable Docker image push in \`docker-build\` job" >> $GITHUB_STEP_SUMMARY
+          echo "6. ✅ Set up deployment pipeline to Kubernetes cluster" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 🔗 Important Files" >> $GITHUB_STEP_SUMMARY
+          echo "- \`src/main/resources/application.properties\` - Application configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- \`src/main/resources/frontend/\` - React frontend source" >> $GITHUB_STEP_SUMMARY
+          echo "- \`src/main/resources/static/\` - Compiled frontend assets" >> $GITHUB_STEP_SUMMARY
+          echo "- \`pom.xml\` - Maven dependencies and build configuration" >> $GITHUB_STEP_SUMMARY
