@@ -23,6 +23,8 @@ env:
   ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -35,48 +37,3 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
-      
-  # ================================
-  # Frontend Build Job
-  # ================================
-  frontend-build:
-    name: Build Frontend (React + Tailwind + Vite)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure Git authentication
-        run: |
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/main/resources/frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: src/main/resources/frontend
-        run: npm install
-
-      - name: Build frontend
-        working-directory: src/main/resources/frontend
-        run: npm run build
-
-      - name: Verify frontend build output
-        run: |
-          echo "📦 Checking frontend build output..."
-          ls -la src/main/resources/static/ || true
-          echo ""
-          echo "Verifying critical files:"
-          test -f src/main/resources/static/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
-          test -f src/main/resources/static/login.html && echo "✅ login.html exists" || echo "❌ login.html missing"
-          test -d src/main/resources/static/assets && echo "✅ assets directory exists" || echo "❌ assets directory missing"
-          echo ""
-          echo "Assets contents:"
-          ls -lh src/main/resources/static/assets/ | head -10 || true
