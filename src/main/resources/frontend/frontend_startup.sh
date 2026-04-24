@@ -17,7 +17,8 @@ echo ""
 
 # Build the frontend
 echo -e "${YELLOW}Step 1: Building frontend...${NC}"
-npm install
+npm install --force
+npx eslint --fix
 npm run build
 echo -e "${GREEN}✓ Frontend built${NC}"
 echo ""

@@ -1,7 +1,4 @@
-import { ReactNode } from "react";
-
-const Footer = () => {
-  return (
+const Footer = () => (
       <div>
         <footer className="landing-footer-default landing-footer-sm landing-footer-md">
                   <div className="text-center max-w-fill mx-auto leading-tight sm:leading-normal mx-30">
@@ -11,6 +8,5 @@ const Footer = () => {
         </footer>
     </div>
   );
-};
 
 export default Footer;

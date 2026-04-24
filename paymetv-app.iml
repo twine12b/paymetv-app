@@ -9,5 +9,13 @@
     <facet type="Python" name="Python">
       <configuration sdkName="" />
     </facet>
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20251211231622" />
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20251211231655" />
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20251211231657" />
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20251211231659" />
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20251211231708" />
+      <excludeFolder url="file://$MODULE_DIR$/.github/java-upgrade/20251211231730" />
+      <excludeFolder url="file://$MODULE_DIR$/uploads" />
+    </content>
   </component>
 </module>
