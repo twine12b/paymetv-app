@@ -19,5 +19,9 @@ src/main/resources/kafka/node_modules/
 uploads/
 src/main/resources/database/.portforward.pid
 src/main/resources/database/schema.sql
+.idea/dataSources
 
+.secrets
+.env
 
+.github/workflows
