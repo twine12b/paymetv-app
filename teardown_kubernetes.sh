@@ -68,3 +68,21 @@ echo -e "${YELLOW}Note: To delete the ingress-nginx namespace and cert-manager, 
 echo -e "  kubectl delete namespace ingress-nginx"
 echo -e "  kubectl delete namespace cert-manager"
 echo ""
+
+# Step 3: Delete namespaces (optional, but will delete all resources within)
+#kubectl delete namespace default
+kubectl delete namespace database
+kubectl delete namespace monitoring
+kubectl delete namespace kafka
+kubectl delete namespace streaming
+echo -e "${GREEN}✓ Namespaces deleted${NC}"
+echo ""
+
+# Step 4: Clean up docker images (optional)
+docker rmi paymetv/streaming-app:latest 2>/dev/null || echo -e "${BLUE}  No local Docker images to delete${NC}"
+docker rmi paymetv/paymetv-app:latest 2>/dev/null || echo -e "${BLUE}  No local Docker images to delete${NC}"
+docker rmi paymetv/mysql:latest 2>/dev/null || echo -e "${BLUE}  No local Docker images to delete${NC}"
+docker rmi paymetv/kafka:latest 2>/dev/null || echo -e "${BLUE}  No local Docker images to delete${NC}"
+echo -e "${GREEN}✓ Local Docker images cleaned up${NC}"
+echo ""
+

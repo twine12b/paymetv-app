@@ -7,20 +7,31 @@
     "dev": "vite",
     "build": "tsc && vite build && npm run copy-login",
     "copy-login": "cp src/login.html ../static/login.html",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.17",
+    "eslint-plugin": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@eslint/css": "^1.1.0",
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^1.2.0",
+    "@eslint/markdown": "^8.0.1",
     "@tailwindcss/vite": "^4.1.17",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@vitejs/plugin-react-swc": "^3.11.0",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.5.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^4.9.3",
+    "typescript-eslint": "^8.59.0",
     "vite": "^7.2.7"
   }
 }
