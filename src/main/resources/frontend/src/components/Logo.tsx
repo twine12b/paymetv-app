@@ -1,8 +1,6 @@
-import { ReactNode } from "react";
 import pmtvLogo from '../assets/tvlogo-whiteout2.svg';
 
-const Logo = () => {
-  return (
+const Logo = () => (
       <div className="relative flex flex-col top-5">
         <img
           src={pmtvLogo}
@@ -11,7 +9,6 @@ const Logo = () => {
         />
     </div>
   );
-};
 
 export default Logo;
 

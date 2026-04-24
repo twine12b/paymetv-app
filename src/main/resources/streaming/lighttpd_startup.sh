@@ -40,4 +40,4 @@ echo -e "${GREEN}✓ Ingress Lighttpd deployed${NC}"
 echo ""
 
 # port forward PayMeTV services
-#kubectl port-forward -n default svc/paymetv-app-service 8080:80 > /dev/null 2>&1 &
+kubectl port-forward -n streaming svc/lighttpd 3000:80 > /dev/null 2>&1 &
