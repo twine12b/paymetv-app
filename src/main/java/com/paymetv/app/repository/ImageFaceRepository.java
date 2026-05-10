@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @EnableJpaRepositories(basePackages = "com.paymetv.app.repository")
 public interface ImageFaceRepository extends JpaRepository<ImageFace, Long> {
-    Optional <ImageFace> findByFront(String image);
+    Optional<ImageFace> findByFront(String image);
 
-    Optional <ImageFace> findByArtifact(Artifact artifact);
+    Optional<ImageFace> findByArtifact(Artifact artifact);
 }

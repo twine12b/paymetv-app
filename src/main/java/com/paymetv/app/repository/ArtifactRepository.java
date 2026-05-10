@@ -20,4 +20,3 @@ public interface ArtifactRepository extends JpaRepository<Artifact, Long> {
 
     List<Artifact> findByStatus(boolean b);
 }
-

@@ -92,4 +92,8 @@ kubectl logs ingress-nginx-controller-748d997b68-bxjds
 kubectl edit ingress paymetv-app-ingress
 kubectl describe cert pmtv-acme-http-stage-cert 
 kubectl get pods -A
+mvn wrapper:wrapper  - install maven wrapper
+mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8000
+
+
 ```

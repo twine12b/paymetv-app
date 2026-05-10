@@ -1,10 +1,29 @@
 package com.paymetv.app.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+/**
+ * Represents an artifact in the system, which can be a trained ML model.
+ *
+ * @author PayMeTV Team
+ * @version 1.0
+ * @since 2024-06-01
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 @Builder
 @Entity

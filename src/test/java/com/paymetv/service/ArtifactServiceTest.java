@@ -44,7 +44,7 @@ public class ArtifactServiceTest {
     @Autowired
     private JsonPayloadCreatorService jsonPayloadCreatorService;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
     private JsonNode expected_artifact_json;
     private JsonNode expected_user_json;
     private JsonNode expected_imageface_json;

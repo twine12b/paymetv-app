@@ -44,7 +44,7 @@ public class KafkaArtifactServiceTest {
     @MockitoBean
     private KafkaTemplate<String, Object> kafkaTemplate;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
     private JsonNode expected_product_json;
     private JsonNode expected_user_json;
 

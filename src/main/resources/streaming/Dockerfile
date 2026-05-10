@@ -22,7 +22,6 @@ RUN set -ex && \
     chown -R lighttpd:lighttpd /var/lib/lighttpd && \
     chown -R lighttpd:lighttpd /var/log/lighttpd && \
     chown -R lighttpd:lighttpd /run/lighttpd && \
-    # Clean up
     rm -rf /var/cache/apk/*
 
 RUN apk --no-cache add php7 \
