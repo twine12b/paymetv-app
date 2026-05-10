@@ -201,4 +201,3 @@ public class ArtifactRepositoryTest {
 ////        assertThat(reloaded.getDescription()).isEqualTo("Updated description");
 ////    }
 }
-

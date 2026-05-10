@@ -1,5 +1,7 @@
 package com.paymetv.app.service;
 
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,25 +9,22 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
-
 /**
  * Kafka service that replicates the functionality of pmtv-test.js.
- * 
+ * <p></p>
  * This service connects to Kafka broker at 127.0.0.1:9093 and:
  * - Sends 500 messages sequentially with counter and timestamp
  * - Consumes messages from pmtv-test-topic
  * - Logs progress every 100 messages
- * 
  * Configuration is managed through application.properties:
  * - spring.kafka.bootstrap-servers=127.0.0.1:9093
  * - spring.kafka.consumer.group-id=pmtv-test-group
  * - spring.kafka.consumer.auto-offset-reset=earliest
- * 
+ *
  * @author PayMeTV Team
- * @see src/main/resources/kafka/pmtv-test.js
  */
+// @see src/main/resources/kafka/{pmtv-test.js}
+
 @Service
 public class PmtvKafkaService {
 
@@ -67,7 +66,9 @@ public class PmtvKafkaService {
 //            try {
 //                for (int i = 1; i <= TOTAL_MESSAGES; i++) {
 //                    String timestamp = Instant.now().toString();
-//                    String messageValue = String.format("Message #%d from PaymeTv at %s", i, timestamp);
+//                    String messageValue = String.format(
+//                        "Message #%d from PaymeTv at %s", i, timestamp
+//                    );
 //
 //                    final int messageNumber = i;
 //                    kafkaTemplate.send(TOPIC, messageValue)
@@ -141,4 +142,3 @@ public class PmtvKafkaService {
 //        return TOTAL_MESSAGES;
 //    }
 }
-

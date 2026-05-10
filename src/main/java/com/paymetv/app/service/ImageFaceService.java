@@ -7,6 +7,8 @@ import com.paymetv.app.repository.ImageFaceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class ImageFaceService {
 
@@ -21,7 +23,7 @@ public class ImageFaceService {
     }
 
     public static Object getImageFace() {
-        return new String("This is working");
+        return "This is working";
     }
 
     public String giveMeString() {
@@ -67,26 +69,26 @@ public class ImageFaceService {
                 .orElseThrow(() -> new RuntimeException("ImageFace not found with id: " + id));
     }
 
-    /**
-     * Retrieves all ImageFace entities.
-     *
-     * @return list of all ImageFaces
-     */
-    public java.util.List<ImageFace> findAll() {
-        return imageFaceRepository.findAll();
+  /**
+   * Retrieves all ImageFace entities.
+   *
+   * @return list of all ImageFaces
+   */
+   public List<ImageFace> findAll() {
+    return imageFaceRepository.findAll();
     }
 
-    /**
-     * Deletes an ImageFace by ID.
-     *
-     * @param id the ID of the ImageFace to delete
-     * @throws RuntimeException if not found
-     */
-    @Transactional
-    public void deleteImageFace(Long id) {
-        if (!imageFaceRepository.existsById(id)) {
-            throw new RuntimeException("ImageFace not found with id: " + id);
-        }
-        imageFaceRepository.deleteById(id);
+  /**
+   * Deletes an ImageFace by ID.
+   *
+   * @param id the ID of the ImageFace to delete
+   * @throws RuntimeException if not found
+   */
+  @Transactional
+  public void deleteImageFace(Long id) {
+    if (!imageFaceRepository.existsById(id)) {
+      throw new RuntimeException("ImageFace not found with id: " + id);
     }
+    imageFaceRepository.deleteById(id);
+  }
 }

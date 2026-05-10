@@ -33,7 +33,7 @@ fi
 
 echo -e "${YELLOW}Step 1: Building frontend...${NC}"
 pushd $frontend_dir > /dev/null
-npm install
+npm install --force
 npm run build
 popd > /dev/null
 echo -e "${GREEN}✓ Frontend built successfully${NC}"

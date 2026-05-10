@@ -340,5 +340,3 @@ public class ImageFaceControllerTest {
                 "ImageFace should be deleted");
     }
 }
-
-

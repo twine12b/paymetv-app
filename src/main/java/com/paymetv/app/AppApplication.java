@@ -12,6 +12,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 @SpringBootApplication(exclude = {
-        org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
+        SecurityFilterAutoConfiguration.class
 })
 @EntityScan(basePackages = "com.paymetv.app.domain")
 //@RestController
@@ -193,7 +194,7 @@ public class AppApplication implements WebMvcConfigurer {
         return ResponseEntity.ok().body("Metrics not available");
     }
 
-    static class Item {
+    private static class Item {
         private String name;
 
         public String getName() {

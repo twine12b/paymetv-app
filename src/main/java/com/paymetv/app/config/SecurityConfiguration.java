@@ -58,7 +58,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, UserDetailsService userDetailsService) throws Exception {
         http
-            .authorizeHttpRequests((authz) -> authz
+            .authorizeHttpRequests(authz -> authz
                 // ✅ Public endpoints - NO authentication required
                 .requestMatchers("/", "/index.html").permitAll()        // Root landing page and index.html
                 .requestMatchers("/login.html", "/login").permitAll()   // Login page
@@ -85,7 +85,7 @@ public class SecurityConfiguration {
                     "/api/imageface/**"       // ImageFace CRUD API
                 )
             )
-            .formLogin((form) -> form
+            .formLogin(form -> form
                 .loginPage("/login.html")                    // Custom login page
                 .loginProcessingUrl("/login")                // Where to POST the form
                 .defaultSuccessUrl("/upload", true)          // ✅ Redirect after successful login

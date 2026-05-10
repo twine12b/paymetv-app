@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Spring Kafka equivalent of src/main/resources/kafka/index.js.
- *
+ * <P></P>
  * JS → Java mapping:
  *   kafka.Producer  → KafkaTemplate (auto-configured via spring.kafka.producer.*)
  *   kafka.Consumer  → @KafkaListener (auto-configured via spring.kafka.consumer.*)
@@ -43,7 +43,9 @@ public class KafkaServiceOld {
 //                        if (ex == null) {
 //                            log.info("Message sent {}", result.getRecordMetadata().toString());
 //                        } else {
-//                            log.error("Failed to send message to topic {}: {}", TOPIC, ex.getMessage());
+//                            log.error(
+//                              "Failed to send message to topic {}: {}",
+//                               TOPIC, ex.getMessage());
 //                        }
 //                    });
 //        }
@@ -62,4 +64,3 @@ public class KafkaServiceOld {
 //        log.info("Received: {}", message);
 //    }
 }
-

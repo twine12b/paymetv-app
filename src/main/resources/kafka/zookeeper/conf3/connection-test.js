@@ -24,7 +24,7 @@ try {
     // start the consumer
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
-            console.log({ 'Received message: ': ${message.value.toString()};
+            console.log({ 'Received message: ': ${message.value.toString()}
         },
     });
 

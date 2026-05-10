@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @EnableJpaRepositories(basePackages = "com.paymetv.app.repository")
 public interface UserRepository extends JpaRepository<Users, Long> {
-    Optional <Users> findByEmail(String mail);
+    Optional<Users> findByEmail(String mail);
 
 }
