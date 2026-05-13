@@ -1,4 +1,4 @@
-name: CI/CD Pipeline shape
+name: CI/CD Pipeline
 
 on:
   push:
@@ -8,7 +8,34 @@ on:
     branches:
       - master
 
+# Workflow permissions
+permissions:
+  contents: read
+  packages: read
+  actions: read
+  checks: write
+  pull-requests: write
+
+# Prevent concurrent builds on the same ref
+concurrency:
+  group: paymetv-${{ github.ref }}
+  cancel-in-progress: true
+
+# Global environment variables
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '24'
+  MAVEN_OPTS: '-Xmx1024m'
+  ACTIONS_RUNTIME_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+  APP_NAME: 'paymetv-app'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NVD_API_KEY: '${{ secrets.OWASP_NVD_API_KEY }}'
+
+
 jobs:
+  # ================================
+  # Frontend Build Job
+  # ================================
   node_build:
     runs-on: ubuntu-latest
     steps:
@@ -21,9 +48,11 @@ jobs:
           node-version: '18' # You can change this to your desired Node.js version
 
       - name: Install Node.js dependencies
-        run: npm ci # Use 'npm install' if you don't use a lock file
+        working-directory: src/main/resources/frontend
+        run: npm ci --force # Use 'npm install' if you don't use a lock file
 
       - name: Build Node.js application
+        working-directory: src/main/resources/frontend
         run: npm run build # Adjust this command if your build script is different
 
       - name: Upload Node.js artifact
@@ -125,4 +154,4 @@ jobs:
         with:
           context: . # Assumes Dockerfile is in the root of the repository
           push: true
-          tags: your-dockerhub-username/your-repo-name:${{ steps.generate_tag.outputs.IMAGE_TAG }}
+          tags: paymetv/paymetv-app:${{ steps.generate_tag.outputs.IMAGE_TAG }}
