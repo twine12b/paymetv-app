@@ -3,10 +3,10 @@ name: CI/CD Pipeline shape
 on:
   push:
     branches:
-      - main
+      - maSTER
   pull_request:
     branches:
-      - main
+      - maSTER
 
 jobs:
   node_build:
