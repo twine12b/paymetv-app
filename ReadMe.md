@@ -95,6 +95,5 @@ kubectl get pods -A
 mvn wrapper:wrapper  - install maven wrapper
 mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8000
 
-DELETE THIS LINE
 
 ```
