@@ -1,65 +1,152 @@
-name: CI/CD Pipeline
+name: CI/CD Workflow
 
 on:
   push:
-    branches:
-      - master
+    branches: ["master"]
   pull_request:
-    branches:
-      - master
+    branches: ["master"]
 
-# Workflow permissions
-permissions:
-  contents: read
-  packages: read
-  actions: read
-  checks: write
-  pull-requests: write
-
-# Prevent concurrent builds on the same ref
-concurrency:
-  group: paymetv-${{ github.ref }}
-  cancel-in-progress: true
-
-# Global environment variables
 env:
   JAVA_VERSION: '17'
   NODE_VERSION: '24'
   MAVEN_OPTS: '-Xmx1024m'
-  ACTIONS_RUNTIME_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+  ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   APP_NAME: 'paymetv-app'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  NVD_API_KEY: '${{ secrets.OWASP_NVD_API_KEY }}'
-
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE_24: true
+  IMAGE_NAME: 'paymetv/paymetv-app'
 
 jobs:
   # ================================
-  # Frontend Build Job
+  # App Build Job
   # ================================
-  node_build:
+  build-app:
     runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.image_tag.outputs.image_tag }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Generate IMAGE_TAG
+        id: image_tag
+        run: echo "image_tag=$(date -u +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Print image values
+        run: |
+          echo "IMAGE_TAG is ${{ steps.image_tag.outputs.image_tag }}"
+          echo "IMAGE_NAME is $IMAGE_NAME"
+          echo "FULL IMAGE is $IMAGE_NAME:${{ steps.image_tag.outputs.image_tag }}"
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # You can change this to your desired Node.js version
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: src/main/resources/frontend/package-lock.json
 
-      - name: Install Node.js dependencies
+      - name: Build Frontend
         working-directory: src/main/resources/frontend
-        run: npm ci --force # Use 'npm install' if you don't use a lock file
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
 
-      - name: Build Node.js application
-        working-directory: src/main/resources/frontend
-        run: npm run build # Adjust this command if your build script is different
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
 
-      - name: Upload build artifact
+      - name: Build Backend with Maven
+        run: |
+          chmod +x ./mvnw
+          ./mvnw clean package -DskipTests
+
+      - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-app
-          path: |
-            dist
-            package.json
-            package-lock.json
+          name: app-jar
+          path: target/paymetv-app-0.0.1-SNAPSHOT.jar
+
+  # ================================
+  # Test Build Jobb
+  # ================================
+  lint_test:
+    runs-on: ubuntu-latest
+    needs: build-app # This job runs after the maven_build job
+    steps:
+        - name: print simple message
+          run: echo "Lint tests would run here. This is a placeholder step."
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Node.js for linting
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '18' # Ensure Node.js is available for linting tools
+#
+#      - name: Install Node.js dependencies for linting
+#        run: npm ci
+#
+#      - name: Run lint tests
+#        run: npm run lint # Adjust this command if your linting script is different
+
+  # ================================
+  # Integration Build Job
+  # ================================
+  integration_test:
+    runs-on: ubuntu-latest
+    needs: build-app # This job runs after the maven_build job, in parallel with lint_test
+    steps:
+      - name: print simple message
+        run: echo "Integration tests would run here. This is a placeholder step."
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Set up JDK 17 for integration tests
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '17'
+#          distribution: 'corretto'
+#          cache: 'maven'
+#
+#      - name: Download Maven artifact for tests (if needed)
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: maven-app-artifact
+#          path: ./maven-app-dist
+#
+#      - name: Run integration tests
+#        run: mvn verify -Pintegration-tests # Adjust this command if your integration tests are run differently (e.g., 'mvn integration-test')
+
+
+  # ================================
+  # Docker Build Job
+  # ================================
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    needs: [lint_test, integration_test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download JAR Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target
+
+      - name: Verify artifact
+        run: ls -lah target
+
+      - name: Build and Push Docker Image
+        uses: mr-smithers-excellent/docker-build-push@v6
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ needs.build-app.outputs.image_tag }},latest
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
