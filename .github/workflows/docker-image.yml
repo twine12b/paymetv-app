@@ -146,11 +146,11 @@ jobs:
       - name: Verify artifact
         run: ls -lah target
 
-      - name: Build and Push Docker Image
-        uses: mr-smithers-excellent/docker-build-push@v6
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ needs.build-app.outputs.image_tag }},latest
-          registry: docker.io
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      # - name: Build and Push Docker Image
+      #   uses: mr-smithers-excellent/docker-build-push@v6
+      #   with:
+      #     image: ${{ env.IMAGE_NAME }}
+      #     tags: ${{ needs.build-app.outputs.image_tag }},latest
+      #     registry: docker.io
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
