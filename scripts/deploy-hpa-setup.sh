@@ -5,8 +5,10 @@
 
 set -e
 
-NAMESPACE="${1:-default}"
-K8S_DIR="src/main/resources/k8s"
+NAMESPACE="${1:-mymonitor}"
+K8S_DIR="../src/main/resources/k8s"
+frontend_dir="../src/main/resources/frontend"
+root_dir=".."
 
 # Colors
 GREEN='\033[0;32m'
@@ -22,21 +24,23 @@ echo ""
 
 # Step 1: Verify metrics-server
 echo -e "${YELLOW}Step 1: Verifying metrics-server...${NC}"
-./scripts/verify-metrics-server.sh
+./verify-metrics-server.sh
 echo ""
 
 # Step 2: Build and push Docker image
 echo -e "${YELLOW}Step 2: Building Docker image...${NC}"
 echo "Building frontend..."
-cd src/main/resources/frontend
+pushd $frontend_dir > /dev/null
 npm run build
-cd ../../../..
+popd > /dev/null
 
 echo "Building Spring Boot application..."
+pushd $root_dir > /dev/null
 mvn clean package -DskipTests
 
 echo "Building Docker image..."
 docker build -t paymetv/paymetv-app:latest .
+popd > /dev/null
 
 echo -e "${GREEN}✓ Docker image built${NC}"
 echo ""
@@ -87,8 +91,8 @@ echo ""
 
 # Get service URL
 SERVICE_TYPE=$(kubectl get svc paymetv-app-service -n "${NAMESPACE}" -o jsonpath='{.spec.type}')
-if [ "${SERVICE_TYPE}" = "LoadBalancer" ]; then
-    echo "Waiting for LoadBalancer IP..."
+if [ "${SERVICE_TYPE}" = "NodePort" ]; then
+    echo "Waiting for NodePort..."
     EXTERNAL_IP=""
     while [ -z "${EXTERNAL_IP}" ]; do
         EXTERNAL_IP=$(kubectl get svc paymetv-app-service -n "${NAMESPACE}" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
