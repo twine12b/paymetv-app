@@ -5,15 +5,16 @@ on:
     branches: ["master"]
   pull_request:
     branches: ["master"]
+  merge_group:
+    types: [ checks_requested ]
 
 env:
   JAVA_VERSION: '17'
-  NODE_VERSION: '24'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: '22'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
   MAVEN_OPTS: '-Xmx1024m'
   ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   APP_NAME: 'paymetv-app'
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE_24: true
   IMAGE_NAME: 'paymetv/paymetv-app'
 
 jobs:
@@ -143,7 +144,7 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - name: Checkout code  # ✅ Added to access Dockerfile
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Download JAR Artifact
@@ -157,24 +158,23 @@ jobs:
         with:
           name: app-tag
 
-      - name: test the tag artifact
-        run: |
-          echo "NEW_TAG=$(cat new_tag.txt)" >> $GITHUB_ENV
-          echo "======================"
-          cat new_tag.txt
-          echo "======================"
+      - name: Set NEW_TAG
+        run: echo "NEW_TAG=$(cat new_tag.txt)" >> $GITHUB_ENV
 
-      - name: Verify artifact
-        run: |
-          ls -lah
-          ls -lah target
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and Push Docker Image
-        uses: mr-smithers-excellent/docker-build-push@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.NEW_TAG }}, latest
-          registry: docker.io
-          dockerfile: Dockerfile
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.NEW_TAG }}
+            ${{ env.IMAGE_NAME }}:latest
