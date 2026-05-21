@@ -140,7 +140,7 @@ jobs:
   docker-build-and-push:
     runs-on: ubuntu-latest
     needs: [ lint-test, integration-test ]
-    if: github.event_name == 'push'
+    # if: github.event_name == 'push'
 
     steps:
       - name: Checkout code  # ✅ Added to access Dockerfile
