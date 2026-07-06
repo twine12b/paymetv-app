@@ -113,8 +113,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-app # This job runs after the maven_build job, in parallel with lint_test
     steps:
-      - name: print simple message
-        run: echo "Integration tests would run here. This is a placeholder step."
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Run DatabaseHealthCheck
         run: |
