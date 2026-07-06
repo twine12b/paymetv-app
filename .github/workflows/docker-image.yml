@@ -115,6 +115,11 @@ jobs:
     steps:
       - name: print simple message
         run: echo "Integration tests would run here. This is a placeholder step."
+
+      - name: Run DatabaseHealthCheck
+        run: |
+          echo "Running Database health checker."
+          ./mvnw test '-Dtest=com.paymetv.util.integration.*Test' test
   #      - name: Checkout code
   #        uses: actions/checkout@v5
   #
