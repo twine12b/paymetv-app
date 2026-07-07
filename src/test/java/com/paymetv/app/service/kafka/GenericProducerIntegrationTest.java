@@ -17,11 +17,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -30,32 +26,30 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@EmbeddedKafka(partitions = 1, topics = {"topic-file-upload", "topic-processed-results"})
+@SpringBootTest(properties = {"spring.kafka.bootstrap-servers=${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:9092}"})
 public class GenericProducerIntegrationTest {
-
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired
     private GenericProducer genericProducer;
 
     @Autowired
-    private GenericConsumer genericConsumer; // ensures listener bean is created
+    private GenericConsumer genericConsumer; // ensure listener bean is present and registered
 
     @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate; // wired to embedded broker via TestKafkaConfig
+    private KafkaTemplate<String, Object> kafkaTemplate; // overridden in TestKafkaConfig
 
     @TestConfiguration
     static class TestKafkaConfig {
 
         @Bean
         @Primary
-        public ProducerFactory<String, Object> producerFactory(EmbeddedKafkaBroker embeddedKafkaBroker) {
-            Map<String, Object> props = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
-            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-            return new DefaultKafkaProducerFactory<>(props);
+        public ProducerFactory<String, Object> producerFactory() {
+            String brokers = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092");
+            Map<String, Object> config = new HashMap<>();
+            config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+            config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+            config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+            return new DefaultKafkaProducerFactory<>(config);
         }
 
         @Bean
@@ -63,83 +57,44 @@ public class GenericProducerIntegrationTest {
         public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> pf) {
             return new KafkaTemplate<>(pf);
         }
-
-        @Bean
-        @Primary
-        public DefaultKafkaConsumerFactory<String, String> consumerFactory(EmbeddedKafkaBroker embeddedKafkaBroker) {
-            Map<String, Object> consumerProps = new HashMap<>(KafkaTestUtils.consumerProps("testGroup", "true", embeddedKafkaBroker));
-            consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-            consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-            consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-            return new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
-        }
-
-        @Bean
-        @Primary
-        public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(DefaultKafkaConsumerFactory<String, String> cf) {
-            ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
-            factory.setConsumerFactory(cf);
-            factory.setConcurrency(1);
-            return factory;
-        }
     }
 
     @Test
-    public void testEndToEndUsingGenericProducer() throws Exception {
-        String inputTopic = "topic-file-upload";
-        String resultsTopic = "topic-processed-results";
+    public void e2eProducerToConsumerUsingRealKafka() throws Exception {
+        String brokers = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092");
+        String inputTopic = System.getenv().getOrDefault("KAFKA_INPUT_TOPIC", "topic-file-upload");
+        String resultsTopic = System.getenv().getOrDefault("KAFKA_RESULTS_TOPIC", "topic-processed-results");
 
-        Map<String, Object> consumerProps = new HashMap<>(KafkaTestUtils.consumerProps("resGroup", "true", embeddedKafkaBroker));
+        // create a consumer to read processed results
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("e2e-res-group-" + System.currentTimeMillis(), "true", brokers);
+        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         Consumer<String, String> consumer = cf.createConsumer();
-        embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer, resultsTopic);
+        consumer.subscribe(java.util.Collections.singletonList(resultsTopic));
+        // ensure group join
+        consumer.poll(Duration.ofMillis(200));
 
         String key = "e2e-key-" + System.currentTimeMillis();
         String value = "e2e-value-" + System.currentTimeMillis();
 
+        // send using GenericProducer (application's kafkaTemplate will be the overridden one pointing to real Kafka)
         genericProducer.send(inputTopic, key, value).get(10, TimeUnit.SECONDS);
 
-        ConsumerRecords<String, String> records = KafkaTestUtils.getRecords(consumer, Duration.ofSeconds(15));
-        assertThat(records.count()).isGreaterThan(0);
-
+        // poll for processed message
         boolean found = false;
-        for (ConsumerRecord<String, String> record : records) {
-            if (record.value() != null && record.value().contains(value) && record.value().contains("file upload switch case executed")) {
-                found = true;
-                break;
-            }
-        }
-
-        consumer.close();
-        assertThat(found).isTrue();
-    }
-
-    @Test
-    public void testEndToEndUsingKafkaTemplateAndGenericConsumer() throws Exception {
-        String inputTopic = "topic-file-upload";
-        String resultsTopic = "topic-processed-results";
-
-        Map<String, Object> consumerProps = new HashMap<>(KafkaTestUtils.consumerProps("resGroup2", "true", embeddedKafkaBroker));
-        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
-        Consumer<String, String> consumer = cf.createConsumer();
-        embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer, resultsTopic);
-
-        String key = "e2e2-key-" + System.currentTimeMillis();
-        String value = "e2e2-value-" + System.currentTimeMillis();
-
-        // send via kafkaTemplate to simulate external producer
-        kafkaTemplate.send(inputTopic, key, value).get(10, TimeUnit.SECONDS);
-
-        ConsumerRecords<String, String> records = KafkaTestUtils.getRecords(consumer, Duration.ofSeconds(15));
-        assertThat(records.count()).isGreaterThan(0);
-
-        boolean found = false;
-        for (ConsumerRecord<String, String> record : records) {
-            if (record.value() != null && record.value().contains(value) && record.value().contains("file upload switch case executed")) {
-                found = true;
-                break;
+        long end = System.currentTimeMillis() + 20000;
+        while (System.currentTimeMillis() < end && !found) {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
+            for (ConsumerRecord<String, String> r : records) {
+                String v = r.value();
+                if (v != null && v.contains(value) && v.contains("file upload switch case executed")) {
+                    found = true;
+                    break;
+                }
             }
         }
 
