@@ -1,5 +1,8 @@
 package com.paymetv.app.service.kafka;
 
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -16,26 +19,19 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.boot.test.context.TestConfiguration;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = com.paymetv.app.AppApplication.class)
-@EmbeddedKafka(partitions = 1, topics = {"test-topic"})
 public class GenericProducerIntegrationTest {
-
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired
     private GenericProducer genericProducer;
@@ -45,11 +41,13 @@ public class GenericProducerIntegrationTest {
 
         @Bean
         @Primary
-        public ProducerFactory<String, Object> producerFactory(EmbeddedKafkaBroker embeddedKafkaBroker) {
+        public ProducerFactory<String, Object> producerFactory() {
             Map<String, Object> config = new HashMap<>();
-            config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, embeddedKafkaBroker.getBrokersAsString());
+            String brokers = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092");
+            config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
             config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-            config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+            // use String serializer for end-to-end test so consumer can read as String
+            config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
             return new DefaultKafkaProducerFactory<>(config);
         }
 
@@ -61,19 +59,54 @@ public class GenericProducerIntegrationTest {
     }
 
     @Test
-    public void testSendMessageToTopic() throws Exception {
-        String topic = "test-topic";
+    public void testSendAndConsumeWithRealKafka() throws Exception {
+        String brokers = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092");
+        String topic = System.getenv().getOrDefault("KAFKA_TEST_TOPIC", "test-topic");
 
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("testGroup", "true", embeddedKafkaBroker);
+        // create topic if it does not exist
+        try (AdminClient admin = AdminClient.create(Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokers))) {
+            NewTopic newTopic = new NewTopic(topic, 1, (short) 1);
+            try {
+                admin.createTopics(List.of(newTopic)).all().get(5, TimeUnit.SECONDS);
+            } catch (Exception ignore) {
+                // topic may already exist; ignore failures
+            }
+        }
+
+        Map<String, Object> consumerProps = new HashMap<>();
+        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "e2e-test-group-" + System.currentTimeMillis());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
-        // send a simple payload (JSON will be produced by the application's JsonSerializer)
-        Map<String, String> payload = Map.of("msg", "hello-from-test");
-        var sendResult = genericProducer.send(topic, "test-key", payload).get(10, TimeUnit.SECONDS);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps,
+                new StringDeserializer(), new StringDeserializer());
 
-        // assert send result metadata is present
-        assertThat(sendResult).isNotNull();
-        assertThat(sendResult.getRecordMetadata()).isNotNull();
-        assertThat(sendResult.getRecordMetadata().topic()).isEqualTo(topic);
+        Consumer<String, String> consumer = cf.createConsumer();
+        consumer.subscribe(Collections.singletonList(topic));
+        // allow group join and assignment
+        consumer.poll(Duration.ofMillis(100));
+        consumer.seekToBeginning(consumer.assignment());
+
+        String key = "test-key-" + System.currentTimeMillis();
+        String value = "test-value-" + System.currentTimeMillis();
+
+        // send raw String payload (producer uses StringSerializer in this test)
+        genericProducer.send(topic, key, value).get(10, TimeUnit.SECONDS);
+
+        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(10));
+        assertThat(records.count()).isGreaterThan(0);
+
+        boolean found = false;
+        for (ConsumerRecord<String, String> record : records) {
+            if (key.equals(record.key()) && value.equals(record.value())) {
+                found = true;
+                break;
+            }
+        }
+
+        consumer.close();
+        assertThat(found).isTrue();
     }
 }
