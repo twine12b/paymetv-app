@@ -21,7 +21,6 @@ public class GenericConsumer {
     private final FileUploadService fileUploadService;
     private final ImageFaceService imageFaceService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private String topicName = "ml-learning-group";
 
     public GenericConsumer(FileUploadService fileUploadService,
                            ImageFaceService imageFaceService,
@@ -32,7 +31,7 @@ public class GenericConsumer {
     }
 
     @KafkaListener(
-        topics = {"topic-file-upload", "topic-image-face"},
+        topics = {"topic-file-upload", "topic-image-face", "test-topic"},
         groupId = "ml-learning-group",
         concurrency = "3"
     )
@@ -43,6 +42,7 @@ public class GenericConsumer {
 //            case "topic-image-face" -> "image face switch case executed";
             case "topic-file-upload" -> fileUploadService.sayHi();
             case "topic-image-face" -> imageFaceService.sayHi();
+            case "test-topic" -> "Local kafka test message received";
             default -> "Received message from unknown topic: " + topic;
         };
 
