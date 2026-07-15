@@ -27,7 +27,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * for Spring Boot's test context bootstrapping.</p>
  */
 @Suite
-@SelectPackages({"com.paymetv.repository", "com.paymetv.service", "com.paymetv.util", "com.paymetv.util.payloads", "com.paymetv.util.integration"})
+@SelectPackages({
+        "com.paymetv.repository",
+        "com.paymetv.service",
+        "com.paymetv.service.kafka",
+        "com.paymetv.util",
+        "com.paymetv.util.integration",
+        "com.paymetv.util.payloads",
+})
 @SuiteDisplayName("PMTV Test Suite")
 @SpringBootApplication(scanBasePackages = "com.paymetv.app")
 public class TestApplication {

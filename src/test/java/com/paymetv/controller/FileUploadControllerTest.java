@@ -24,11 +24,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests for FileUploadController.
- *
+ * ---
  * Tests all endpoints exposed by the controller:
  * - GET /api/files/upload - Redirect to upload UI
  * - POST /api/files/upload - File upload with validation
- *
+ * ---
  * Uses MockMvc for testing REST endpoints and mocks KafkaTemplate
  * to avoid requiring a real Kafka broker during tests.
  */

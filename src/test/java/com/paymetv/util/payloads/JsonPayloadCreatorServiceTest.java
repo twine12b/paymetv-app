@@ -33,7 +33,6 @@ class JsonPayloadCreatorServiceTest {
 
     private Artifact artifact;
     private Users test_user;
-    private ImageFace test_image_face;
 
     ObjectMapper mapper = new ObjectMapper();
     private JsonNode expected_artifact_json;
@@ -51,7 +50,7 @@ class JsonPayloadCreatorServiceTest {
         test_user.setPassword("password");
         test_user.setEmail("test@test.com");
 
-        test_image_face = new ImageFace(99L, "test_front_aspect.png", "test_back_aspect.png", "test_left_aspect.png", "test_right_aspect.png", "test_top_aspect.png", "test_bottom_aspect.png", artifact);
+        ImageFace test_image_face = new ImageFace(99L, "test_front_aspect.png", "test_back_aspect.png", "test_left_aspect.png", "test_right_aspect.png", "test_top_aspect.png", "test_bottom_aspect.png", artifact);
 
         artifact = new Artifact();
         artifact.setId(68L);

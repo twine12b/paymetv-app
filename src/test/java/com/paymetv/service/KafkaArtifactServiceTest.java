@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Test class for KafkaArtifactService.
- *
+ * --
  * Uses @SpringBootTest to load the full application context.
  * Mocks KafkaTemplate to avoid requiring a real Kafka broker.
  */
@@ -45,13 +45,10 @@ public class KafkaArtifactServiceTest {
     private KafkaTemplate<String, Object> kafkaTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private JsonNode expected_product_json;
     private JsonNode expected_user_json;
 
     // Entity instances - NOT autowired (entities are not Spring beans)
     private Artifact artifact;
-    private Users test_user;
-    private ImageFace test_image_face;
 
     /**
      * Configure test properties to disable Kafka auto-configuration issues.
@@ -71,14 +68,14 @@ public class KafkaArtifactServiceTest {
     @BeforeEach
     void setup() throws IOException {
         // Create test user entity
-        test_user = new Users();
+        Users test_user = new Users();
         test_user.setId(110L);
         test_user.setUsername("test user");
         test_user.setPassword("password");
         test_user.setEmail("test@test.com");
 
         // Create test image face entity
-        test_image_face = new ImageFace();
+        ImageFace test_image_face = new ImageFace();
         test_image_face.setId(99L);
         test_image_face.setFront("test_front_aspect.png");
 
@@ -96,8 +93,8 @@ public class KafkaArtifactServiceTest {
         test_image_face.setArtifact(artifact);
 
         // Load expected JSON files
-        expected_product_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));
-        expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));
+        JsonNode expected_product_json = mapper.readTree(getClass().getResource("/expected-artifact.json"));
+        JsonNode expected_user_json = mapper.readTree(getClass().getResource("/expected-users.json"));
 
         // Mock KafkaTemplate behavior
         when(kafkaTemplate.send(anyString(), any()))
