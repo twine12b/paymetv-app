@@ -91,4 +91,8 @@ public class ImageFaceService {
     }
     imageFaceRepository.deleteById(id);
   }
+
+    public String sayHi() {
+      return "Hello from ImageFaceService!";
+    }
 }
