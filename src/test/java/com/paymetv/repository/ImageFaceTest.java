@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for ImageFaceRepository.
- *
+ * ---
  * Each test is self-contained and creates its own test data.
  * Tests run in isolated transactions that are rolled back after each test.
  */

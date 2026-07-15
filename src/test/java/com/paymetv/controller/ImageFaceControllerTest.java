@@ -25,9 +25,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests for ImageFaceController.
- *
+ * ---
  * Tests the REST endpoints for creating and managing ImageFace entities.
- *
+ * ---
  * FIXES IMPLEMENTED:
  * 1. Changed controller @PostMapping from "/api/imageface/create" to "/create" to avoid duplicate path
  * 2. Changed test HTTP method from GET to POST
