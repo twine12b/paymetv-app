@@ -2,8 +2,10 @@ package com.paymetv.app.service.kafka;
 
 import com.paymetv.app.service.FileUploadService;
 import com.paymetv.app.service.ImageFaceService;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -11,6 +13,9 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CountDownLatch;
+
+@ConfigurationProperties(prefix = "app.kafka")
 @Component
 public class GenericConsumer {
 
@@ -22,6 +27,13 @@ public class GenericConsumer {
     private final ImageFaceService imageFaceService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    @Getter
+    private final CountDownLatch latch = new CountDownLatch(1);
+    @Getter
+    private volatile String lastMessage;
+    @Getter
+    private volatile String lastTopic;
+
     public GenericConsumer(FileUploadService fileUploadService,
                            ImageFaceService imageFaceService,
                            KafkaTemplate<String, Object> kafkaTemplate) {
@@ -31,21 +43,32 @@ public class GenericConsumer {
     }
 
     @KafkaListener(
-        topics = {"topic-file-upload", "topic-image-face", "test-topic"},
-        groupId = "ml-learning-group",
-        concurrency = "3"
+            topics = "#{'${app.kafka.topics}'.split(',')}",
+            groupId = "ml-learning-group",
+            concurrency = "3"
     )
     public void consume(@Payload String message,
                         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+
+        lastMessage = message;
+        lastTopic = topic;
+
         String result = switch (topic) {
-//            case "topic-file-upload" -> "file upload switch case executed";
-//            case "topic-image-face" -> "image face switch case executed";
             case "topic-file-upload" -> fileUploadService.sayHi();
             case "topic-image-face" -> imageFaceService.sayHi();
-            case "test-topic" -> "Local kafka test message received";
+            case "generic-producer-test" -> "Generic producer test selected";
+            case "test-topic1" -> "Local kafka test message received " + topic;
+            case "test-topic2" -> "Local kafka test message received " + topic;
+            case "test-topic3" -> "Local kafka test message received " + topic;
             default -> "Received message from unknown topic: " + topic;
         };
 
-        kafkaTemplate.send(RESULTS_TOPIC, topic + ": " + message + " -> " + result);
+        log.info(result);
+//        log.info("enriched payload result: {}" ,result);
+
+        kafkaTemplate.send("topic-processed-results",
+                topic + ": " + message + " -> " + result);
+
+        latch.countDown();
     }
 }
