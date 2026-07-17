@@ -125,4 +125,8 @@ public class FileUploadService {
     int dot = filename.lastIndexOf('.');
     return dot >= 0 ? filename.substring(dot) : "";
   }
+
+  public String sayHi() {
+    return "Hello Kafka from file upload service.";
+  }
 }

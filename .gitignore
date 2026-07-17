@@ -10,11 +10,14 @@
 .idea/copilot.data.migration.ask.xml
 .idea/copilot.data.migration.ask2agent.xml
 .idea/copilot.data.migration.edit.xml
+.idea/dataSources.local.xml
+.idea/jarRepositories.xml
 .idea/vcs.xml
 .idea/workspace.xml
 .idea/modules.xml
 .idea/encodings.xml
 .idea/compiler.xml
+.mvn/wrapper/maven-wrapper.properties
 src/main/resources/kafka/node_modules/
 uploads/
 src/main/resources/database/.portforward.pid
