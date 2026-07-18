@@ -93,6 +93,6 @@ public class ImageFaceService {
   }
 
     public String sayHi() {
-        return "Hello Kafka from imageFace service";
+      return "Hello from ImageFaceService!";
     }
 }

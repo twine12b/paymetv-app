@@ -7,7 +7,7 @@ ENV MYSQL_DATABASE=paymetv_db1
 #ENV MYSQL_USER=paymetv_user
 #ENV MYSQL_PASSWORD=paymetv_pass
 COPY dumps/database.sql /docker-entrypoint-initdb.d/
-RUN chmod 644 /docker-entrypoint-initdb.d/database.sql-old
+RUN chmod 644 /docker-entrypoint-initdb.d/database.sql
 
 EXPOSE 3306
 

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for ImageFaceService.
- *
+ * ---
  * Each test is self-contained and creates its own test data.
  * Tests use @Transactional to ensure database rollback after each test.
  */

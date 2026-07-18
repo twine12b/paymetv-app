@@ -43,7 +43,6 @@ public class GenericConsumer {
     }
 
     @KafkaListener(
-//            topics = "test-topic1",
             topics = "#{'${app.kafka.topics}'.split(',')}",
             groupId = "ml-learning-group",
             concurrency = "3"
