@@ -64,7 +64,7 @@ jobs:
       - name: Build Backend with Maven
         run: |
           chmod +x ./mvnw
-          ./mvnw clean package -DskipTests
+          ./mvnw clean package -Dmaven.test.skip=true
 
       - name: save the new tag id
         run: echo ${{ steps.image_tag.outputs.image_tag }} > new_tag.txt
