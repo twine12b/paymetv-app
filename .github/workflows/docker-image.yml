@@ -13,7 +13,7 @@ env:
   NODE_VERSION: '22'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE22: true
   MAVEN_OPTS: '-Xmx1024m'
-  ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   APP_NAME: 'paymetv-app'
   IMAGE_NAME: 'paymetv/paymetv-app'
 
@@ -64,7 +64,7 @@ jobs:
       - name: Build Backend with Maven
         run: |
           chmod +x ./mvnw
-          ./mvnw clean package -Dmaven.test.skip=true
+          ./mvnw clean package -Dmaven.test.skip=true -e -X
 
       - name: save the new tag id
         run: echo ${{ steps.image_tag.outputs.image_tag }} > new_tag.txt
