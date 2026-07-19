@@ -31,8 +31,9 @@
         <gatling.version>3.11.5</gatling.version>
         <gatling-maven-plugin.version>4.9.6</gatling-maven-plugin.version>
         <scala-maven-plugin.version>4.9.2</scala-maven-plugin.version>
+        <scala.version>2.13.16</scala.version>
         <lombok.version>1.18.42</lombok.version>
-        <checkstyle-maven-plugin.version>3..4.0</checkstyle-maven-plugin.version>
+        <checkstyle-maven-plugin.version>3.6.0</checkstyle-maven-plugin.version>
     </properties>
     <dependencies>
 
@@ -146,6 +147,13 @@
             <version>${gatling.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -186,20 +194,27 @@
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
                 <version>${scala-maven-plugin.version}</version>
+
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+
+                    <jvmArgs>
+                        <jvmArg>-Xss100M</jvmArg>
+                    </jvmArgs>
+
+                    <args>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </args>
+
+                    <recompileMode>incremental</recompileMode>
+                </configuration>
+
                 <executions>
                     <execution>
                         <goals>
                             <goal>testCompile</goal>
                         </goals>
-                        <configuration>
-                            <jvmArgs>
-                                <jvmArg>-Xss100M</jvmArg>
-                            </jvmArgs>
-                            <args>
-                                <arg>-deprecation</arg>
-                                <arg>-feature</arg>
-                            </args>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

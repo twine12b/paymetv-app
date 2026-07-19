@@ -14,17 +14,15 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
         </processorPath>
         <module name="paymetv-app" />
         <module name="paymetv" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="19" />
+    <bytecodeTargetLevel target="17" />
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="paymetv" options="-parameters" />
       <module name="paymetv-app" options="-parameters" />
     </option>
   </component>
