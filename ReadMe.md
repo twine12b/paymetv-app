@@ -94,6 +94,8 @@ kubectl describe cert pmtv-acme-http-stage-cert
 kubectl get pods -A
 mvn wrapper:wrapper  - install maven wrapper
 mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8000
+mvn clean spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local" - start on port 8090
+mvn clean spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=prod" - start on port 80
 
 
 ```

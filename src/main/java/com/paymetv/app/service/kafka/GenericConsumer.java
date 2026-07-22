@@ -28,7 +28,7 @@ public class GenericConsumer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Getter
-    private final CountDownLatch latch = new CountDownLatch(1);
+    private volatile CountDownLatch latch = new CountDownLatch(1);
     @Getter
     private volatile String lastMessage;
     @Getter
@@ -70,5 +70,11 @@ public class GenericConsumer {
                 topic + ": " + message + " -> " + result);
 
         latch.countDown();
+    }
+
+    public synchronized void resetLatch() {
+        this.lastMessage = null;
+        this.lastTopic = null;
+        this.latch = new CountDownLatch(1);
     }
 }

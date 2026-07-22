@@ -126,7 +126,7 @@ public class FileUploadService {
     return dot >= 0 ? filename.substring(dot) : "";
   }
 
-  public String sayHi(){
-    return "File upload - Hello World";
+  public String sayHi() {
+    return "Hello Kafka from file upload service.";
   }
 }
