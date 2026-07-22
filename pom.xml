@@ -31,7 +31,7 @@
         <gatling.version>3.11.5</gatling.version>
         <gatling-maven-plugin.version>4.9.6</gatling-maven-plugin.version>
         <scala-maven-plugin.version>4.9.2</scala-maven-plugin.version>
-        <scala.version>2.13.16</scala.version>
+        <scala.version>2.13.14</scala.version>
         <lombok.version>1.18.42</lombok.version>
         <checkstyle-maven-plugin.version>3.6.0</checkstyle-maven-plugin.version>
     </properties>
@@ -191,34 +191,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-                <version>${scala-maven-plugin.version}</version>
-
-                <configuration>
-                    <scalaVersion>${scala.version}</scalaVersion>
-
-                    <jvmArgs>
-                        <jvmArg>-Xss100M</jvmArg>
-                    </jvmArgs>
-
-                    <args>
-                        <arg>-deprecation</arg>
-                        <arg>-feature</arg>
-                    </args>
-
-                    <recompileMode>incremental</recompileMode>
-                </configuration>
-
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>io.gatling</groupId>
                 <artifactId>gatling-maven-plugin</artifactId>
                 <version>${gatling-maven-plugin.version}</version>
@@ -261,4 +233,42 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>performance-tests</id>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <version>${scala-maven-plugin.version}</version>
+
+                        <configuration>
+                            <scalaVersion>${scala.version}</scalaVersion>
+
+                            <jvmArgs>
+                                <jvmArg>-Xss100M</jvmArg>
+                            </jvmArgs>
+
+                            <args>
+                                <arg>-deprecation</arg>
+                                <arg>-feature</arg>
+                            </args>
+
+                            <recompileMode>all</recompileMode>
+                        </configuration>
+
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>testCompile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
