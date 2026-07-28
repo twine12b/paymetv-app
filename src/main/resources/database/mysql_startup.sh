@@ -15,6 +15,16 @@ echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
+#kubectl get namespace database >/dev/null 2>&1 && echo -e "${YELLOW}Database exists, skipping deletion${NC}" ||
+
+if kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
+  echo -e "${YELLOW}Database namespace already exists${NC}"
+  exit 0
+else
+  echo -e "${YELLOW}Creating database namespace...${NC}"
+  kubectl create namespace "$NAMESPACE"
+fi
+
 # Cleanup: Stop existing port-forward process - TODO move to common script keep (DRY)
 echo -e "${YELLOW}Cleanup: Stopping existing port-forward process...${NC}"
 if [ -f ".portforward.pid" ]; then
