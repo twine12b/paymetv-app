@@ -57,7 +57,12 @@ MYSQL_POD=$(kubectl get pods -l app=mysql -n default -o jsonpath='{.items[0].met
 kubectl exec -it $MYSQL_POD -n default -- mysql -u paymetv_user -ppaymetv_pass paymetv_db
 
 # Run test query
-kubectl exec -it $MYSQL_POD -n default -- mysql -u paymetv_user -ppaymetv_pass paymetv_db -e "SHOW DATABASES;"
+kubectl exec -it $MYSQL_POD -n database -- mysql -u paymetv_user -p paymetv_pass paymetv_db -e "SHOW DATABASES;"
+
+# Exec onto the pod and run a query - (set MYSQL_POD to the pod name)
+kubectl exec -it -n database $MYSQL_POD -- mysql -u root -p
+
+
 ```
 
 ## 🔧 Configuration
