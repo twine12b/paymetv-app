@@ -1,5 +1,7 @@
 package com.paymetv.app.config;
 
+import com.paymetv.app.domain.Users;
+import com.paymetv.app.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,11 +9,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -21,6 +25,7 @@ public class SecurityConfiguration {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 
     /**
      * In-memory user details service for development/testing.
@@ -35,6 +40,7 @@ public class SecurityConfiguration {
      */
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+
         UserDetails user = User.builder()
                 .username("user")
                 .password(passwordEncoder.encode("user"))  // ✅ Use injected encoder
@@ -43,7 +49,7 @@ public class SecurityConfiguration {
 
         UserDetails admin = User.builder()
                 .username("admin")
-                .password(passwordEncoder.encode("admin"))  // ✅ Use injected encoder
+                .password(passwordEncoder.encode("admin"))
                 .roles("USER", "ADMIN")
                 .build();
 
@@ -53,54 +59,51 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, UserDetailsService userDetailsService) throws Exception {
         http
-            .authorizeHttpRequests(authz -> authz
-                // ✅ Public endpoints - NO authentication required
-                .requestMatchers("/", "/index.html").permitAll()        // Root landing page and index.html
-                .requestMatchers("/login.html", "/login").permitAll()   // Login page
-                .requestMatchers("/actuator/health/**").permitAll()     // Health checks (Kubernetes)
-                .requestMatchers("/assets/**", "/vite.svg").permitAll() // Static resources
-                .requestMatchers("/metrics").permitAll() // Metrics endpoint
-                .requestMatchers("/*.css", "/*.js", "/*.ico", "/*.png", "/*.jpg", "/*.svg").permitAll() // Static files
-                    .requestMatchers("/swagger-ui/**").hasAnyRole("ADMIN")
+                .authorizeHttpRequests(authz -> authz
+                        // ✅ Public endpoints - NO authentication required
+                        .requestMatchers("/", "/index.html").permitAll()        // Root landing page and index.html
+                        .requestMatchers("/login.html", "/login").permitAll()   // Login page
+                        .requestMatchers("/actuator/health/**").permitAll()     // Health checks (Kubernetes)
+                        .requestMatchers("/assets/**", "/vite.svg").permitAll() // Static resources
+                        .requestMatchers("/metrics").permitAll() // Metrics endpoint
+                        .requestMatchers("/*.css", "/*.js", "/*.ico", "/*.png", "/*.jpg", "/*.svg").permitAll() // Static files
+                        .requestMatchers("/swagger-ui/**").hasAnyRole("ADMIN")
 
-                // ✅ Protected endpoints - authentication required
-                .requestMatchers("/upload", "/upload/**").authenticated()  // File upload page and sub-paths
-                .requestMatchers("/api/**").authenticated()                // All API endpoints
+                        // ✅ Protected endpoints - authentication required
+                        .requestMatchers("/upload", "/upload/**").authenticated()  // File upload page and sub-paths
+                        .requestMatchers("/api/**").authenticated()                // All API endpoints
 
-                // ✅ Everything else requires authentication
-                .anyRequest().authenticated()
-            )
-            .csrf(csrf -> csrf
-                // Use cookie-based CSRF tokens for static HTML forms (e.g., login.html)
-                // This allows JavaScript to read the token from cookies
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // Disable CSRF for REST API endpoints (stateless, token-based)
-                // CSRF protection remains enabled for web forms
-                .ignoringRequestMatchers(
-                    "/api/files/upload",      // File upload API
-                    "/api/imageface/**"       // ImageFace CRUD API
+                        // ✅ Everything else requires authentication
+                        .anyRequest().authenticated()
                 )
-            )
-            .formLogin(form -> form
-                .loginPage("/login.html")                    // Custom login page
-                .loginProcessingUrl("/login")                // Where to POST the form
-                .defaultSuccessUrl("/upload", true)          // ✅ Redirect after successful login
-                .failureUrl("/login.html?error=true")        // Redirect on failure
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")                        // Logout endpoint
-                .logoutSuccessUrl("/?logout=true") // Redirect after logout
-                .invalidateHttpSession(true)                 // Invalidate session
-                .deleteCookies("JSESSIONID", "remember-me")  // Clear cookies
-                .permitAll()
-            )
-            .rememberMe(rememberMe -> rememberMe
-                .key("paymetv-remember-me-key")              // Secret key
-                .tokenValiditySeconds(7 * 24 * 60 * 60)      // 7 days
-                .rememberMeParameter("remember-me")          // Form parameter
-                .userDetailsService(userDetailsService)      // ✅ Use injected service
-            );
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        .ignoringRequestMatchers(
+                                "/api/files/upload",
+                                "/api/imageface/**"
+                        )
+                )
+                .formLogin(form -> form
+                        .loginPage("/login.html")                    // Custom login page
+                        .loginProcessingUrl("/login")                // Where to POST the form
+                        .defaultSuccessUrl("/upload", true)          // ✅ Redirect after successful login
+                        .failureUrl("/login.html?error=true")        // Redirect on failure
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")                        // Logout endpoint
+                        .logoutSuccessUrl("/?logout=true") // Redirect after logout
+                        .invalidateHttpSession(true)                 // Invalidate session
+                        .deleteCookies("JSESSIONID", "remember-me")  // Clear cookies
+                        .permitAll()
+                )
+                .rememberMe(rememberMe -> rememberMe
+                        .key("paymetv-remember-me-key")              // Secret key
+                        .tokenValiditySeconds(7 * 24 * 60 * 60)      // 7 days
+                        .rememberMeParameter("remember-me")          // Form parameter
+                        .userDetailsService(userDetailsService)      // ✅ Use injected service
+                );
 
         return http.build();
     }
