@@ -44,8 +44,9 @@ public class FileUploadService {
   }
 
   private Path setPath(String userDir) {
+    Path normalizedBasePath = Paths.get(this.filePath.toString().strip()).normalize().toAbsolutePath();
     String normalizedUserDir = userDir == null ? "" : userDir.strip().replaceFirst("^/+", "");
-    return this.filePath.normalize().toAbsolutePath().resolve(normalizedUserDir).normalize();
+    return normalizedBasePath.resolve(normalizedUserDir).normalize();
   }
 
   public String sayHi() {
