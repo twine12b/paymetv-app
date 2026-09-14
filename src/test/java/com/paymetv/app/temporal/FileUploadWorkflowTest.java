@@ -111,6 +111,7 @@ class FileUploadWorkflowTest {
             assertTrue(Files.exists(expectedPath));
             assertEquals(expectedPath.toAbsolutePath().toString(), result);
 
+            // Clean up test files
             Files.deleteIfExists(expectedPath);
             Files.deleteIfExists(expectedPath.getParent());
         }

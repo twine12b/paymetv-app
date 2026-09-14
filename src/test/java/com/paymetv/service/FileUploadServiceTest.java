@@ -14,11 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = AppApplication.class, properties = {
         "spring.kafka.bootstrap-servers=localhost:9092",
-        "file.upload-dir=uploads/  "
+        "file.upload-dir=uploads"
 })
 class FileUploadServiceTest {
 
@@ -33,15 +34,17 @@ class FileUploadServiceTest {
 
     @Test
     void upload_leadingSlashUserDir_isSavedUnderConfiguredUploadDirectory() throws IOException {
-        String savedFile = fileUploadService.saveFile("test-content".getBytes(), "test.txt", "/admin");
+        String savedFile = fileUploadService.saveFile("test-content".getBytes(), "test.jpeg", "/admin");
+
         Path savedPath = Paths.get(savedFile).toAbsolutePath().normalize();
         Path expectedBase = Paths.get(uploadDir.strip()).toAbsolutePath().normalize();
+        Path expectedPath = expectedBase.resolve("admin").resolve("test.jpeg").normalize();
 
         try {
             assertTrue(Files.exists(savedPath));
-            assertTrue(savedPath.startsWith(expectedBase));
-            assertTrue(savedPath.toString().contains("admin"));
+            assertEquals(expectedPath, savedPath);
         } finally {
+            // Clean up test files
             Files.deleteIfExists(savedPath);
             Files.deleteIfExists(savedPath.getParent());
         }
