@@ -7,15 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = AppApplication.class, properties = {
@@ -34,31 +32,19 @@ class FileUploadServiceTest {
     private String uploadDir;
 
     @Test
-    void upload_savesFileToUploadDirectory() throws IOException {
+    void upload_leadingSlashUserDir_isSavedUnderConfiguredUploadDirectory() throws IOException {
+        String savedFile = fileUploadService.saveFile("test-content".getBytes(), "test.txt", "/admin");
+        Path savedPath = Paths.get(savedFile).toAbsolutePath().normalize();
+        Path expectedBase = Paths.get(uploadDir.strip()).toAbsolutePath().normalize();
 
-        System.out.println(uploadDir);
-
-        String userDir = "12345";
-        File file = new File("test.jpeg");
-        MultipartFile multipartFile = new MockMultipartFile(
-                "file",
-                file.getName(),
-                "image/jpeg",
-                Files.readAllBytes(file.toPath())
-        );
-
-        System.out.println(file.exists() ? "test.jpg exists." : "test.jpg does not exist.");
-
-        // Act
-        String savedFile = fileUploadService.saveFile(multipartFile, userDir);
-
-//        try {
-//            // Assert
-//            assertTrue(Files.exists(file));
-//            assertEquals("test-content", Files.readString(savedFile));
-//        } finally {
-//            Files.deleteIfExists(savedFile);
-//        }
+        try {
+            assertTrue(Files.exists(savedPath));
+            assertTrue(savedPath.startsWith(expectedBase));
+            assertTrue(savedPath.toString().contains("admin"));
+        } finally {
+            Files.deleteIfExists(savedPath);
+            Files.deleteIfExists(savedPath.getParent());
+        }
     }
 }
 

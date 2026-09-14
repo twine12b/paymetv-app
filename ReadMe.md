@@ -86,6 +86,12 @@ flowchart TD
     style I fill:#92400e,color:#fff
 ```
 
+### Temporal gotcha
+```temporal
+IF THE SERVER IS NOT RUNNING, THE FILE UPLOAD FEATURE WILL NOT WORK.
+## Other test cases in the suite will FAIL unless the server is running
+```
+
 ## Useful Commands
 ```commandline
 kubectl logs ingress-nginx-controller-748d997b68-bxjds
