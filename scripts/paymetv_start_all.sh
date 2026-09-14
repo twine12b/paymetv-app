@@ -10,6 +10,7 @@ database_dir="../src/main/resources/database"
 monitoring_dir="../src/main/resources/prometheus"
 kafka_dir="../src/main/resources/kafka"
 frontend_dir="../src/main/resources/frontend"
+workflow_dir="../src/main/resources/workflow"
 ENVIRONMENT=$1
 
 # Colors - TODO move to common script
@@ -101,6 +102,15 @@ popd > /dev/null
 echo -e "${GREEN}✓ Monitoring app started${NC}"
 echo ""
 
+# Step 7: Starting Workflow app
+kubectl config set-context --current --namespace=${NAMESPACE-workflow}
+echo -e "${YELLOW}Step 5: Starting Workflow app...${NC}"
+pushd $workflow_dir > /dev/null
+./workflow_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Workflow app started${NC}"
+echo ""
+
 
 # Final Summary
 echo -e "${BLUE}=========================================${NC}"
@@ -115,6 +125,7 @@ echo "  ✓ Database Application - http://localhost:3306"
 echo "  ✓ Monitoring Application Grafana - http://localhost:3010"
 echo "  ✓ Monitoring Application Prometheus - http://localhost:9090"
 echo "  ✓ Monitoring Application Alertmanager - http://localhost:9093"
+echo "  ✓ Workflow Application Temporal UI - http://localhost:8088"
 echo ""
 echo -e "$RED Note: It may take a few minutes for all applications to be ready.${NC}"
 echo ""

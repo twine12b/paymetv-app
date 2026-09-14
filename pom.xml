@@ -34,6 +34,8 @@
         <scala.version>2.13.14</scala.version>
         <lombok.version>1.18.42</lombok.version>
         <checkstyle-maven-plugin.version>3.6.0</checkstyle-maven-plugin.version>
+        <temporal.version>1.30.0</temporal.version>
+        <temporal.test.version>1.33.0</temporal.test.version>
     </properties>
     <dependencies>
 
@@ -154,6 +156,20 @@
             <version>${scala.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-sdk</artifactId>
+            <version>${temporal.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-testing</artifactId>
+            <version>${temporal.test.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

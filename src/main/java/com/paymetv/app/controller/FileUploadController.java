@@ -43,11 +43,8 @@ public class FileUploadController {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/png",
-            "image/gif",
-            "image/webp",
-            "application/pdf",
-            "video/mp4",
-            "video/mpeg"
+            "image/tiff",
+            "application/pdf"
     );
 
     @GetMapping("/upload")
@@ -88,13 +85,7 @@ public class FileUploadController {
             String username = (auth != null && auth.getName() != null) ? auth.getName() : "unknown";
             Long userId = (auth != null && auth.getPrincipal() instanceof Users user) ? user.getId() : null;
 
-            System.out.println("===============================");
-            System.out.println("Authenticated user: " + username);
-            System.out.println("User ID: " + userId);
-            System.out.println("===============================");
-
-//            String savedPath = fileUploadService.saveFile(file, "/" + userRepository.findByUsername(username).getId());
-            String savedPath = fileUploadService.saveFile(file, "/" + username);
+            String savedPath = fileUploadService.saveFile(file.getBytes(), file.getOriginalFilename(), username);
 
             String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
             String storedName = Paths.get(savedPath).getFileName().toString();

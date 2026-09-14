@@ -25,22 +25,27 @@ public class FileUploadService {
   private Path filePath;
 
   public String saveFile(MultipartFile fileData, String userDir) throws IOException {
+    return saveFile(fileData.getBytes(), Objects.requireNonNull(fileData.getOriginalFilename()), userDir);
+  }
+
+  public String saveFile(byte[] fileData, String filename, String userDir) throws IOException {
     Path directory = Paths.get(setPath(userDir).toUri());
 
     // Create the directory if it doesn't exist
     Files.createDirectories(directory);
 
     // Create the file path
-    Path filePath = directory.resolve(Objects.requireNonNull(fileData.getOriginalFilename()));
+    Path filePath = directory.resolve(filename);
 
     // Write the file
-    Files.write(filePath, fileData.getBytes());
+    Files.write(filePath, fileData);
 
     return filePath.toAbsolutePath().toString();
   }
 
   private Path setPath(String userDir) {
-    return Paths.get(this.filePath.toString() + userDir);
+    String normalizedUserDir = userDir == null ? "" : userDir.strip().replaceFirst("^/+", "");
+    return this.filePath.normalize().toAbsolutePath().resolve(normalizedUserDir).normalize();
   }
 
   public String sayHi() {

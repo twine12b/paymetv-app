@@ -28,6 +28,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @Suite
 @SelectPackages({
+        "com.paymetv.app.temporal",
         "com.paymetv.repository",
         "com.paymetv.service",
         "com.paymetv.service.kafka",
