@@ -34,11 +34,11 @@ class FileUploadServiceTest {
 
     @Test
     void upload_leadingSlashUserDir_isSavedUnderConfiguredUploadDirectory() throws IOException {
-        String savedFile = fileUploadService.saveFile("test-content".getBytes(), "test.jpeg", "/admin");
+        String savedFile = fileUploadService.saveFile("test-content".getBytes(), "test.jpeg", "/adminTest");
 
         Path savedPath = Paths.get(savedFile).toAbsolutePath().normalize();
         Path expectedBase = Paths.get(uploadDir.strip()).toAbsolutePath().normalize();
-        Path expectedPath = expectedBase.resolve("admin").resolve("test.jpeg").normalize();
+        Path expectedPath = expectedBase.resolve("adminTest").resolve("test.jpeg").normalize();
 
         try {
             assertTrue(Files.exists(savedPath));
