@@ -78,6 +78,7 @@ jobs:
     needs: build-app
     env:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+      TEMPORAL_WORKER_ENABLED: "false"
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
