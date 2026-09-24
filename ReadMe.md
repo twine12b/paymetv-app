@@ -103,5 +103,10 @@ mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8000
 mvn clean spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local" - start on port 8090
 mvn clean spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=prod" - start on port 80
 
+-- Run as single block inside of ../resources/ml/ --
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+
 
 ```

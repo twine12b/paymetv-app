@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymetv-app-deployment
+  labels:
+    app: paymetv-app
+spec:
+  replicas: 2  # Initial replicas - HPA will manage this
+  selector:
+    matchLabels:
+      app: paymetv-app
+  template:
+    metadata:
+      labels:
+        app: paymetv-app
+    spec:
+      containers:
+        - name: paymetv-app
+          image: paymetv/paymetv-app:latest
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          # Resource requests and limits are REQUIRED for HPA to work
+          resources:
+            requests:
+              cpu: 200m      # Request 200 millicores (0.2 CPU)
+              memory: 256Mi  # Request 256 MiB memory
+            limits:
+              cpu: 500m      # Limit to 500 millicores (0.5 CPU)
+              memory: 512Mi  # Limit to 512 MiB memory
+          
+          # ============================================
+          # FIXED: Startup Probe (Added)
+          # ============================================
+          # Startup probe gives the app up to 120 seconds to start (12 checks * 10 seconds)
+          # This prevents liveness/readiness from killing the pod during initial JVM startup
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 80
+            initialDelaySeconds: 30    # Wait 30s before first check
+            periodSeconds: 10          # Check every 10 seconds
+            timeoutSeconds: 5          # Wait 5s for response
+            failureThreshold: 12       # Allow 12 failures (total 2 minutes startup time)
+          
+          # ============================================
+          # FIXED: Liveness Probe (Increased delays)
+          # ============================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 80
+            initialDelaySeconds: 60    # INCREASED from 30 to 60 seconds
+            periodSeconds: 15          # INCREASED from 10 to 15 seconds
+            timeoutSeconds: 5          
+            failureThreshold: 3        
+          
+          # ============================================
+          # FIXED: Readiness Probe (Increased delays)
+          # ============================================
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 80
+            initialDelaySeconds: 45    # INCREASED from 20 to 45 seconds
+            periodSeconds: 10          # Check every 10 seconds
+            timeoutSeconds: 5          # INCREASED from 3 to 5 seconds
+            failureThreshold: 3        
+          
+          # ============================================
+          # FIXED: Environment Variables
+          # ============================================
+          env:
+            # JVM Memory settings
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx384m"
+            
+            # FIXED: Kafka configuration (use Kubernetes service name)
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-broker-1.kafka.svc.cluster.local:9092,kafka-broker-2.kafka.svc.cluster.local:9093"
+            
+            # FIXED: MySQL configuration (use Kubernetes service name)
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service.database.svc.cluster.local:3306/paymetv_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+                  optional: true  # Allow pod to start even if secret doesn't exist
+            
+            # Kafka consumer configuration
+            - name: SPRING_KAFKA_CONSUMER_GROUP_ID
+              value: "pmtv-test-group"
+            
+            - name: SPRING_KAFKA_CLIENT_ID
+              value: "pmtv-test-client"
+            
+            # Enable health check features
+            - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+              value: "true"
+            
+            - name: MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED
+              value: "true"
+            
+            - name: MANAGEMENT_HEALTH_READINESSSTATE_ENABLED
+              value: "true"

@@ -23,6 +23,7 @@
         git
         jdk17
         nodejs
+        python312
         neovim
       ];
     };

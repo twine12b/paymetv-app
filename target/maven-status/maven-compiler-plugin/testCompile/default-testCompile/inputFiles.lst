@@ -1,0 +1,16 @@
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/TestApplication.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/app/AppApplicationTests.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/app/temporal/MachineLearningWorkflowTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/controller/FileUploadControllerTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/controller/ImageFaceControllerTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/repository/ArtifactRepositoryTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/repository/ImageFaceTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/repository/UserRepositoryTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/service/ArtifactServiceTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/service/FileUploadServiceTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/service/ImageFaceServiceTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/service/ImageMaskServiceTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/service/KafkaArtifactServiceTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/service/kafka/GenericKafkaTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/util/integration/DatabaseHealthCheck.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/util/payloads/JsonPayloadCreatorServiceTest.java

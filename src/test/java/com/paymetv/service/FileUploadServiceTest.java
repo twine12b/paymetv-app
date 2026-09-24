@@ -45,8 +45,8 @@ class FileUploadServiceTest {
             assertEquals(expectedPath, savedPath);
         } finally {
             // Clean up test files
-            Files.deleteIfExists(savedPath);
-            Files.deleteIfExists(savedPath.getParent());
+//            Files.deleteIfExists(savedPath);
+//            Files.deleteIfExists(savedPath.getParent());
         }
     }
 }
