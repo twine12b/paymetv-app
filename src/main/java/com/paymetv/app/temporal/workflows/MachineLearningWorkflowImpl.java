@@ -5,6 +5,7 @@ import com.paymetv.app.service.ImageMaskService;
 import com.paymetv.app.service.NotifyAllService;
 import com.paymetv.app.temporal.activities.MachineLearningActivity;
 import io.temporal.activity.ActivityOptions;
+import io.temporal.common.RetryOptions;
 import io.temporal.workflow.Workflow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,9 @@ public class MachineLearningWorkflowImpl implements MachineLearningWorkflow {
             MachineLearningActivity.class,
             ActivityOptions.newBuilder()
                     .setStartToCloseTimeout(Duration.ofSeconds(30))
+                    .setRetryOptions(RetryOptions.newBuilder()
+                            .setMaximumAttempts(3)
+                            .build())
                     .build()
     );
 

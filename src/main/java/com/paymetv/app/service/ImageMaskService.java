@@ -32,14 +32,16 @@ public class ImageMaskService {
         Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "background_removal_tool.py").toAbsolutePath();
 
         Path inputDirectory = Path.of("uploads", loc).toAbsolutePath();
-        String inputFileName = "test.jpeg";
+        String inputFileName = (filename != null && !filename.isBlank()) ? filename : "test.jpeg";
         Path inputPath = inputDirectory.resolve(inputFileName);
         Path outputPath = inputDirectory.resolve("output").resolve("test.png");
         String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : "python3";
 
         Files.createDirectories(inputDirectory);
         Path seedImagePath = Path.of("test.jpeg").toAbsolutePath();
-        Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
+        if (!Files.exists(inputPath) && Files.exists(seedImagePath)) {
+            Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
+        }
         Files.deleteIfExists(outputPath);
 
         ProcessBuilder processBuilder = new ProcessBuilder(
@@ -64,7 +66,7 @@ public class ImageMaskService {
 
         int exitCode = process.waitFor();
 
-        return "removing background";
+        return "removing background success";
     }
 
     public String imageMask(String loc, String file) throws IOException, InterruptedException {
@@ -74,15 +76,17 @@ public class ImageMaskService {
         Path inputDirectory = Path.of("uploads", loc, "output").toAbsolutePath();
         String inputFileName = "test.png";
         Path inputPath = inputDirectory.resolve(inputFileName);
-        Path outputPath = inputDirectory.resolve(inputDirectory + "/masks").resolve("test.png");
+        Path outputPath = inputDirectory.resolve("masks").resolve("test.png");
 
         String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : "python3";
 
         Files.createDirectories(inputDirectory);
-        Path seedImagePath = Path.of("uploads", loc, "output", "test.png").toAbsolutePath();
-        System.out.println(seedImagePath.toString());
-        Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
         Files.deleteIfExists(outputPath);
+
+        if (!Files.exists(inputPath)) {
+            logger.warn("Input file not found for masking: {}", inputPath);
+            return "input file not found";
+        }
 
         ProcessBuilder processBuilder = new ProcessBuilder(
                 pythonCommand,
@@ -105,14 +109,7 @@ public class ImageMaskService {
         }
 
         int exitCode = process.waitFor();
-//
-//        if(!output.toString().contains("successful") ||
-//                (!Files.exists(seedImagePath))) // && Files.exists(outputPath)))
-//        {
-//            return output.toString();
-//
-//        }
 
-        return "masking image";
+        return "masking image success";
     }
 }

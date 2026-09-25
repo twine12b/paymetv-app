@@ -9,7 +9,6 @@ com/paymetv/service/KafkaArtifactServiceTest.class
 com/paymetv/controller/FileUploadControllerTest.class
 com/paymetv/repository/ArtifactRepositoryTest.class
 com/paymetv/controller/ImageFaceControllerTest.class
-com/paymetv/app/temporal/FileUploadWorkflowTest.class
 com/paymetv/service/kafka/GenericKafkaTest.class
 com/paymetv/service/ArtifactServiceTest.class
 com/paymetv/service/ImageFaceServiceTest.class
