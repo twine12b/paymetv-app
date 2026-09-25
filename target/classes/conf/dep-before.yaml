@@ -25,6 +25,22 @@ spec:
               value: root
             - name: SPRING_DATASOURCE_PASSWORD
               value: Ch1ldren
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: kafka-broker-1.kafka.svc.cluster.local:9092,kafka-broker-2.kafka.svc.cluster.local:9093
+            - name: SPRING_KAFKA_CONSUMER_GROUP_ID
+              value: pmtv-test-group
+            - name: SPRING_KAFKA_CLIENT_ID
+              value: pmtv-test-client
+            - name: TEMPORAL_TARGET
+              value: temporal.workflow.svc.cluster.local:7233
+            - name: TEMPORAL_WORKER_ENABLED
+              value: "true"
+            - name: MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
+              value: "true"
+            - name: MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED
+              value: "true"
+            - name: MANAGEMENT_HEALTH_READINESSSTATE_ENABLED
+              value: "true"
           ports:
             - containerPort: 80
               name: http

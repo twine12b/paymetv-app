@@ -34,15 +34,14 @@ echo ""
 echo -e "${YELLOW}Deploying Temporal workflow stack...${NC}"
 kubectl apply -f "${MANIFEST_FILE}"
 echo -e "${GREEN}✓ Manifests applied${NC}"
-if ! kubectl -n "${NAMESPACE}" rollout status deployment/temporal --timeout=300s; then
 echo -e "${YELLOW}Waiting for deployments to become ready...${NC}"
-  kubectl -n "${NAMESPACE}" rollout status deployment/postgres --timeout=300s
-  kubectl -n "${NAMESPACE}" rollout status deployment/temporal --timeout=300s
-  kubectl -n "${NAMESPACE}" rollout status deployment/temporal-ui --timeout=300s
-fi
+kubectl -n "${NAMESPACE}" rollout status deployment/postgres --timeout=300s
+kubectl -n "${NAMESPACE}" rollout status deployment/temporal --timeout=300s
+kubectl -n "${NAMESPACE}" rollout status deployment/temporal-ui --timeout=300s
 echo -e "${GREEN}✓ Temporal stack is ready${NC}"
 echo ""
 
 # Port forward Temporal UI
-kubectl port-forward -n "${NAMESPACE}" svc/temporal-ui 8088:8080 > /dev/null 2>&1 &
+pkill -f "kubectl port-forward.*8088" > /dev/null 2>&1 || true
+kubectl port-forward -n "${NAMESPACE}" deployment/temporal-ui 8088:8080 > /dev/null 2>&1 &
 echo -e "${GREEN}✓ Temporal UI port-forward started at http://localhost:8088${NC}"

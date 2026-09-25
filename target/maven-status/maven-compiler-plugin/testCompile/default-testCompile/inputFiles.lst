@@ -1,6 +1,6 @@
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/TestApplication.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/app/AppApplicationTests.java
-/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/app/temporal/FileUploadWorkflowTest.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/app/temporal/FileUploadWorkflowTest.java-dontuse.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/app/temporal/MachineLearningWorkflowTest.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/controller/FileUploadControllerTest.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/test/java/com/paymetv/controller/ImageFaceControllerTest.java
