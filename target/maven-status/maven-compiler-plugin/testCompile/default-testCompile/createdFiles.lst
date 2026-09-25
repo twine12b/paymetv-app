@@ -1,0 +1,17 @@
+com/paymetv/util/payloads/JsonPayloadCreatorServiceTest.class
+com/paymetv/TestApplication.class
+com/paymetv/app/temporal/MachineLearningWorkflowTest.class
+com/paymetv/repository/UserRepositoryTest.class
+com/paymetv/service/ImageMaskServiceTest.class
+com/paymetv/service/FileUploadServiceTest.class
+com/paymetv/repository/ImageFaceTest.class
+com/paymetv/service/KafkaArtifactServiceTest.class
+com/paymetv/controller/FileUploadControllerTest.class
+com/paymetv/repository/ArtifactRepositoryTest.class
+com/paymetv/controller/ImageFaceControllerTest.class
+com/paymetv/app/temporal/FileUploadWorkflowTest.class
+com/paymetv/service/kafka/GenericKafkaTest.class
+com/paymetv/service/ArtifactServiceTest.class
+com/paymetv/service/ImageFaceServiceTest.class
+com/paymetv/util/integration/DatabaseHealthTest.class
+com/paymetv/app/AppApplicationTests.class

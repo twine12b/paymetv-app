@@ -3,6 +3,7 @@
 set -e  # Exit on error (but we'll use || true for optional deletions)
 
 namespaces=("default" "streaming")
+teardown_namespaces=("database" "monitoring" "kafka" "streaming" "workflow")
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -41,9 +42,8 @@ echo -e "${BLUE}Starting teardown of resources in namespace: ${namespace}${NC}"
 echo ""
 
 # Step 2: Delete Deployments (to prevent pod recreation)
-kubectl delete deployments --all -n $namespace
-kubectl delete deployments -n $namespace --all 2>/dev/null || echo -e "${BLUE}  No deployments found${NC}"
-kubectl delete pods --all -n $namespace
+kubectl delete deployments --all -n "$namespace" --ignore-not-found=true || true
+kubectl delete pods --all -n "$namespace" --ignore-not-found=true || true
 echo -e "${GREEN}✓ Deployments deleted${NC}"
 echo ""
 done
@@ -71,10 +71,20 @@ echo ""
 
 # Step 3: Delete namespaces (optional, but will delete all resources within)
 #kubectl delete namespace default
-kubectl delete namespace database
-kubectl delete namespace monitoring
-kubectl delete namespace kafka
-kubectl delete namespace streaming
+for namespace in "${teardown_namespaces[@]}"; do
+  echo -e "${BLUE}Deleting namespace: ${namespace}${NC}"
+
+  # Try graceful deletion first and wait for completion.
+  kubectl delete namespace "$namespace" --ignore-not-found=true --wait=true --timeout=60s || true
+
+  # If still present (typically stuck in Terminating), remove finalizers.
+  if kubectl get namespace "$namespace" >/dev/null 2>&1; then
+    echo -e "${YELLOW}  Namespace ${namespace} still present; removing finalizers...${NC}"
+    kubectl patch namespace "$namespace" --type=merge -p '{"metadata":{"finalizers":[]}}' >/dev/null 2>&1 || true
+    kubectl patch namespace "$namespace" --type=merge -p '{"spec":{"finalizers":[]}}' >/dev/null 2>&1 || true
+    kubectl delete namespace "$namespace" --ignore-not-found=true --wait=false >/dev/null 2>&1 || true
+  fi
+done
 echo -e "${GREEN}✓ Namespaces deleted${NC}"
 echo ""
 

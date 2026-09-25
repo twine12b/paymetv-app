@@ -58,7 +58,48 @@ popd > /dev/null
 echo -e "${GREEN}✓ Kafka app started${NC}"
 echo ""
 
-# Step 3: Starting Paymetv app
+# Step 3: Starting Database app
+kubectl config set-context --current --namespace=${NAMESPACE-database}
+echo -e "${YELLOW}Step 3: Starting Database app...${NC}"
+pushd $database_dir > /dev/null
+./mysql_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Database app started${NC}"
+echo ""
+
+## Step 4: Starting Streaming app
+#echo -e "${YELLOW}Step 2: Starting Streaming app...${NC}"
+#kubectl config set-context --current --namespace=${NAMESPACE-streaming}
+#pushd $streaming_dir > /dev/null
+#./lighttpd_startup.sh
+#popd > /dev/null
+#echo -e "${GREEN}✓ Streaming app started${NC}"
+#echo ""
+
+# Step 5: Starting Monitoring app
+kubectl config set-context --current --namespace=${NAMESPACE-monitoring}
+echo -e "${YELLOW}Step 4: Starting Monitoring app...${NC}"
+pushd $monitoring_dir > /dev/null
+./prometheus_startup.sh
+sleep 10
+# TODO: fix why prometheus is not starting first time
+./prometheus_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Monitoring app started${NC}"
+echo ""
+
+# Step 6: Starting Workflow app
+kubectl config set-context --current --namespace=${NAMESPACE-workflow}
+echo -e "${YELLOW}Step 5: Starting Workflow app...${NC}"
+pushd $workflow_dir > /dev/null
+./workflow_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Workflow app started${NC}"
+echo ""
+
+
+# Must start after database and workflow
+# Step 7: Starting Paymetv app
 echo -e "${YELLOW}Step 1: Starting Paymetv app...${NC}"
 echo -e "${YELLOW}Setting namespace to ${NAMESPACE-default}...${NC}"
 kubectl config set-context --current --namespace=${NAMESPACE-default}
@@ -72,46 +113,6 @@ popd > /dev/null
 echo -e "${GREEN}✓ Paymetv app started${NC}"
 echo ""
 
-# Step 4: Starting Streaming app
-echo -e "${YELLOW}Step 2: Starting Streaming app...${NC}"
-kubectl config set-context --current --namespace=${NAMESPACE-streaming}
-pushd $streaming_dir > /dev/null
-./lighttpd_startup.sh
-popd > /dev/null
-echo -e "${GREEN}✓ Streaming app started${NC}"
-echo ""
-
-# Step 5: Starting Database app
-kubectl config set-context --current --namespace=${NAMESPACE-database}
-echo -e "${YELLOW}Step 3: Starting Database app...${NC}"
-pushd $database_dir > /dev/null
-./mysql_startup.sh
-popd > /dev/null
-echo -e "${GREEN}✓ Database app started${NC}"
-echo ""
-
-# Step 6: Starting Monitoring app
-kubectl config set-context --current --namespace=${NAMESPACE-monitoring}
-echo -e "${YELLOW}Step 4: Starting Monitoring app...${NC}"
-pushd $monitoring_dir > /dev/null
-./prometheus_startup.sh
-sleep 10
-# TODO: fix why prometheus is not starting first time
-./prometheus_startup.sh
-popd > /dev/null
-echo -e "${GREEN}✓ Monitoring app started${NC}"
-echo ""
-
-# Step 7: Starting Workflow app
-kubectl config set-context --current --namespace=${NAMESPACE-workflow}
-echo -e "${YELLOW}Step 5: Starting Workflow app...${NC}"
-pushd $workflow_dir > /dev/null
-./workflow_startup.sh
-popd > /dev/null
-echo -e "${GREEN}✓ Workflow app started${NC}"
-echo ""
-
-
 # Final Summary
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}✓ All Deployments Started!${NC}"
@@ -120,7 +121,7 @@ echo ""
 echo "Deployment components:"
 echo "  ✓ Kafka Application - http://localhost:8082"
 echo "  ✓ PayMeTV Application - http://localhost:8080"
-echo "  ✓ Streaming Application - http://localhost:3000"
+#echo "  ✓ Streaming Application - http://localhost:3000"
 echo "  ✓ Database Application - http://localhost:3306"
 echo "  ✓ Monitoring Application Grafana - http://localhost:3010"
 echo "  ✓ Monitoring Application Prometheus - http://localhost:9090"

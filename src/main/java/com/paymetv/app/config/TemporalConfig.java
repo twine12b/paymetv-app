@@ -1,13 +1,14 @@
 package com.paymetv.app.config;
 
-import com.paymetv.app.temporal.activities.FileUploadActivityImpl;
-import com.paymetv.app.temporal.workflows.FileUploadWorkflowImpl;
+import com.paymetv.app.temporal.activities.MachineLearningActivityImpl;
+import com.paymetv.app.temporal.workflows.MachineLearningWorkflowImpl;
 import io.temporal.client.WorkflowClient;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,9 +20,6 @@ public class TemporalConfig {
 
     @Value("${temporal.task-queue:file-upload-task-queue}")
     private String taskQueue;
-
-    @Value("${temporal.worker.enabled:true}")
-    private boolean temporalWorkerEnabled;
 
     @Bean(destroyMethod = "shutdown")
     public WorkflowServiceStubs workflowServiceStubs() {
@@ -38,14 +36,12 @@ public class TemporalConfig {
     }
 
     @Bean(destroyMethod = "shutdown")
-    public WorkerFactory workerFactory(WorkflowClient workflowClient, FileUploadActivityImpl fileUploadActivityImpl) {
+    @ConditionalOnProperty(name = "temporal.worker.enabled", havingValue = "true", matchIfMissing = true)
+    public WorkerFactory workerFactory(WorkflowClient workflowClient, MachineLearningActivityImpl fileUploadActivityImpl) {
         WorkerFactory workerFactory = WorkerFactory.newInstance(workflowClient);
         Worker worker = workerFactory.newWorker(taskQueue);
-        worker.registerWorkflowImplementationTypes(FileUploadWorkflowImpl.class);
+        worker.registerWorkflowImplementationTypes(MachineLearningWorkflowImpl.class);
         worker.registerActivitiesImplementations(fileUploadActivityImpl);
-        if (temporalWorkerEnabled) {
-            workerFactory.start();
-        }
         return workerFactory;
     }
 }

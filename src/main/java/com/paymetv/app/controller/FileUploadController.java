@@ -43,7 +43,11 @@ public class FileUploadController {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/png",
+            "image/gif",
+            "image/webp",
             "image/tiff",
+            "video/mp4",
+            "video/mpeg",
             "application/pdf"
     );
 

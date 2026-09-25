@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lighttpd
+  namespace: streaming
+  labels:
+    app: lighttpd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lighttpd
+  template:
+    metadata:
+      labels:
+        app: lighttpd
+    spec:
+      containers:
+        - name: lighttpd
+          image: paymetv/streaming-app:latest
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          env:
+            - name: UID
+              value: "100"
+            - name: GID
+              value: "101"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: www-data
+              mountPath: /var/www
+      volumes:
+        - name: www-data
+          emptyDir: {}

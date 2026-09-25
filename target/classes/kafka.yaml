@@ -1,0 +1,9 @@
+app:
+  kafka:
+    topics:
+      - generic-producer-test
+      - test-topic1
+      - test-topic2
+      - test-topic3
+      - topic-file-upload
+      - topic-image-face

@@ -1,0 +1,76 @@
+@startuml End-to-End Product Promotion & ML Pipeline
+skinparam style strictuml
+skinparam SequenceMessageAlign center
+
+actor "User (Authenticated)" as user
+participant "Dashboard" as dashboard
+participant "Upload Page" as uploadPage
+participant "Product Service" as productService
+participant "Database" as database
+queue "Kafka Queue A" as kafkaQueueA
+
+participant "Consumer Service A" as consumerA
+participant "ML_Service" as mlService
+queue "Kafka Queue B" as kafkaQueueB
+
+participant "Consumer Service B" as consumerB
+participant "Model Training Service" as trainingService
+participant "Notification Service" as notificationService
+
+== Product Upload Flow ==
+
+user -> dashboard: Choose promote_product
+
+alt User chooses to promote_product
+    dashboard -> uploadPage: Redirect to upload page
+    uploadPage --> user: Display upload form
+
+    user -> uploadPage: Upload product data
+    uploadPage -> productService: Submit product data
+
+    productService -> database: Save product details
+    database --> productService: Success
+
+    productService -> productService: Create product JSON
+    productService -> kafkaQueueA: Publish JSON message
+
+    productService --> uploadPage: Upload success
+    uploadPage --> user: Show success message
+
+else User does not promote_product
+    dashboard --> user: Continue normal usage
+end
+
+== Async ML Processing Flow ==
+
+consumerA -> kafkaQueueA: Poll for messages
+kafkaQueueA --> consumerA: Product JSON message
+
+consumerA -> mlService: Send product JSON
+
+mlService -> mlService: Validate product image
+mlService -> mlService: Clean background
+mlService -> mlService: Mask image
+
+mlService -> database: Save cleaned & masked images
+database --> mlService: Success
+
+mlService -> mlService: Create processed JSON
+mlService -> kafkaQueueB: Publish processed JSON
+kafkaQueueB --> mlService: Acknowledge message
+
+== Model Training Flow ==
+
+consumerB -> kafkaQueueB: Poll for messages
+kafkaQueueB --> consumerB: Processed JSON (image dataset)
+
+consumerB -> trainingService: Send dataset
+
+trainingService -> trainingService: Train model
+trainingService -> database: Save trained model
+database --> trainingService: Success
+
+trainingService -> notificationService: Notify completion
+notificationService -> user: Process complete notification
+
+@enduml

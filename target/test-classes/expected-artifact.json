@@ -1,0 +1,13 @@
+{
+  "id" : 68,
+  "name" : "test artifact name",
+  "description" : "test Description",
+  "model" : "some_test_model stored as string",
+  "user" : {
+    "id" : 110,
+    "username" : "test user",
+    "password" : "password",
+    "email" : "test@test.com"
+  },
+  "status" : true
+}
