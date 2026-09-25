@@ -21,7 +21,7 @@ public class ImageMaskServiceTest {
     @DisplayName("background removal tool service")
     public void callBackgroundRemovalTool_fromJava() throws Exception {
 
-        String loc = "src/test/resources/";
+        String loc = "uploads/testUser12345/output/";
         String file = "test.jpeg";
 
         String output = imageMaskService.removeBackground(loc, file);
@@ -36,11 +36,9 @@ public class ImageMaskServiceTest {
     @DisplayName("Image masking")
     public void callImageMaskingTool_fromJava() throws Exception {
 
-        String loc = "src/update/adminTest/output/";
+        String loc = "uploads/testUser12345/output/";
 //        Path outputPath = Path.of("src/update/adminTest/output/masks/");
         String file = "test.png";
-
-        String output = imageMaskService.imageMask(loc, file);
 
         // TODO - Create assertions
 //        assertEquals(0, exitCode, "Python output:\n" + output);

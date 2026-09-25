@@ -10,6 +10,7 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
+import jdk.jfr.Description;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -83,9 +84,12 @@ class FileUploadWorkflowTest {
         assertTrue(Files.exists(expectedPath));
         assertEquals(expectedPath.toAbsolutePath().toString(), result);
 
-        Files.deleteIfExists(expectedPath);
-        Files.deleteIfExists(expectedPath.getParent());
+        cleanup(expectedPath);
         assertFalse(Files.exists(expectedPath));
+
+//        Files.deleteIfExists(expectedPath);
+//        Files.deleteIfExists(expectedPath.getParent());
+//        assertFalse(Files.exists(expectedPath));
     }
 
     @Test
@@ -111,9 +115,18 @@ class FileUploadWorkflowTest {
             assertTrue(Files.exists(expectedPath));
             assertEquals(expectedPath.toAbsolutePath().toString(), result);
 
+            cleanup(expectedPath);
+            assertFalse(Files.exists(expectedPath));
+
             // Clean up test files
-            Files.deleteIfExists(expectedPath);
-            Files.deleteIfExists(expectedPath.getParent());
+//            Files.deleteIfExists(expectedPath);
+//            Files.deleteIfExists(expectedPath.getParent());
         }
     }
+
+    @Description("Cleans up test files")
+    private void cleanup(Path expectedPath) throws IOException {
+        Files.deleteIfExists(expectedPath);
+        Files.deleteIfExists(expectedPath.getParent());
     }
+}

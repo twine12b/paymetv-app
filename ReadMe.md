@@ -26,6 +26,8 @@ run the setup_cert_manager.sh
 
 ####Deploy/Setup
 ````
+mvn clean install -DskipTests
+mvn clean package -DskipTests
 mvn package && java -jar target/paymetv-0.0.1-SNAPSHOT.jar
 docker build -t paymetv-app:latest .
 docker run -dp 192.168.0.2:80:8080 paymetv-app:latest
@@ -108,5 +110,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 
-
+```
+```
+git rm -r --cached src/main/resources/ml/.venv/
 ```

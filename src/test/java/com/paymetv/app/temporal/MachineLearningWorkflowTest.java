@@ -10,6 +10,7 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
+import jdk.jfr.Description;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.io.UncheckedIOException;
+import java.util.Comparator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -100,8 +103,7 @@ class MachineLearningWorkflowTest {
         assertTrue(Files.exists(expectedPath));
         assertEquals(expectedPath.toAbsolutePath().toString(), result);
 
-        Files.deleteIfExists(expectedPath);
-        Files.deleteIfExists(expectedPath.getParent());
+        cleanup(expectedPath);
         assertFalse(Files.exists(expectedPath));
     }
 
@@ -120,11 +122,8 @@ class MachineLearningWorkflowTest {
         assertTrue(Files.exists(expectedPath));
         assertEquals(expectedPath.toAbsolutePath().toString(), result);
 
-        // TODO - create background removal method
-
-//        Files.deleteIfExists(expectedPath);
-//        Files.deleteIfExists(expectedPath.getParent());
-//        assertFalse(Files.exists(expectedPath));
+        cleanup(expectedPath);
+        assertFalse(Files.exists(expectedPath));
     }
 
     @Test
@@ -151,9 +150,8 @@ class MachineLearningWorkflowTest {
             assertTrue(Files.exists(expectedPath));
             assertEquals("success", result);
 
-            // Clean up test files
-//            Files.deleteIfExists(expectedPath);
-//            Files.deleteIfExists(expectedPath.getParent());
+            cleanup(expectedPath);
+            assertFalse(Files.exists(expectedPath));
         }
     }
 
@@ -211,6 +209,22 @@ class MachineLearningWorkflowTest {
             worker.stopWorker();
 
             assertFalse(worker.isWorkerReady());
+        }
+    }
+
+    @Description("Cleans up test files")
+    private void cleanup(Path expectedPath) throws IOException {
+        Path userDirectory = expectedPath.getParent();
+        if (Files.exists(userDirectory)) {
+            try (var paths = Files.walk(userDirectory)) {
+                paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            }
         }
     }
 }

@@ -30,8 +30,12 @@
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/service/TrainModel.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/service/kafka/GenericConsumer.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/service/kafka/GenericProducer.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/activities/FileUploadActivity.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/activities/FileUploadActivityImpl.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/activities/MachineLearningActivity.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/activities/MachineLearningActivityImpl.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/workflows/FileUploadWorkflow.java
+/Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/workflows/FileUploadWorkflowImpl.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/workflows/MachineLearningWorker.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/workflows/MachineLearningWorkflow.java
 /Users/richardrenaud/IdeaProjects/paymetv-app2/paymetv-app/src/main/java/com/paymetv/app/temporal/workflows/MachineLearningWorkflowImpl.java
