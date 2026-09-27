@@ -67,7 +67,7 @@ public class ImageMaskServiceTest {
         String file = "test.png";
         String output = imageMaskService.imageMask(expectedPath.toString(), file);
 
-        cleanup(Path.of(expectedPath.toString()));
+//        cleanup(Path.of(expectedPath.toString()));
 
         assertFalse(Files.exists(expectedPath));
         assertTrue(output.contains("success"), "Python output:\n" + output);
