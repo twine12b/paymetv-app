@@ -2,17 +2,16 @@ package com.paymetv.app.service;
 
 import jdk.jfr.Description;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 
@@ -23,9 +22,21 @@ public class ImageMaskService {
     Logger logger = LoggerFactory.getLogger(ImageMaskService.class);
 
     @Value("${file.upload-dir}")
-    private Path filePath;
+    private Path prefix;
 
-    // TODO - read the raw image file and apply the mask to it, then save the masked image to the same directory
+    @Value("${ml_dir}")
+    private String output_prefix;
+
+    @Value("${ml_dummy_source_dir}")
+    private File sourceDir;
+
+    @Value("${ml_dummy_destination_dir}")
+    private File destDir;
+
+    @Value("${ml_sub_dir}")
+    private String ml_sub_dir;
+
+    // reads the raw image file and apply the mask to it, then save the masked image to the same directory
     String cmd = setPythonCmd();
 
     public String sayHi () { return "Hello from ImageMaskService!";}
@@ -35,7 +46,7 @@ public class ImageMaskService {
         Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
         Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "background_removal_tool.py").toAbsolutePath();
 
-        Path inputDirectory = Path.of("uploads", loc).toAbsolutePath();
+        Path inputDirectory = Path.of(prefix.toString(), loc).toAbsolutePath();
         String inputFileName = "test.jpeg";
         Path inputPath = inputDirectory.resolve(inputFileName);
         Path outputPath = inputDirectory.resolve("output").resolve("test.png");
@@ -71,20 +82,18 @@ public class ImageMaskService {
         return "removing background successful";
     }
 
-    public String imageMask(String loc, String file) throws IOException, InterruptedException {
+    public String imageMask(String loc, String filename) throws IOException, InterruptedException {
         Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
         Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "image_masking_tool.py").toAbsolutePath();
 
-        Path inputDirectory = Path.of("uploads", loc, "output").toAbsolutePath();
-        String inputFileName = "test.png";
-        Path inputPath = inputDirectory.resolve(inputFileName);
-        Path outputPath = inputDirectory.resolve(inputDirectory + "/masks").resolve("test.png");
+        Path inputDirectory = Path.of(prefix.toString(), loc, "output").toAbsolutePath();
+        Path inputPath = inputDirectory.resolve(filename);
+        Path outputPath = inputDirectory.resolve(inputDirectory + "/masks").resolve(filename);
 
         String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
 
         Files.createDirectories(inputDirectory);
-        Path seedImagePath = Path.of("uploads", loc, "output", "test.png").toAbsolutePath();
-        System.out.println(seedImagePath.toString());
+        Path seedImagePath = Path.of(prefix.toString(), loc, "output", filename).toAbsolutePath();
         Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
         Files.deleteIfExists(outputPath);
 
@@ -94,7 +103,7 @@ public class ImageMaskService {
                 "--location",
                 inputDirectory.toString(),
                 "--file",
-                inputFileName
+                filename
         );
         processBuilder.redirectErrorStream(true);
 
@@ -113,9 +122,47 @@ public class ImageMaskService {
         return "masking image successful";
     }
 
+    public String changeFileAspectRatio(String loc, String filename) throws IOException, InterruptedException {
+        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
+        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "image_resizer.py").toAbsolutePath();
+
+        Path inputDirectory = Path.of(prefix.toString(), loc, "output").toAbsolutePath();
+        String inputFileName = filename;
+        Path inputPath = inputDirectory.resolve(inputFileName);
+        Path outputPath = inputDirectory.resolve(inputDirectory).resolve(filename);
+
+        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                pythonCommand,
+                scriptPath.toString(),
+                "--location",
+                loc,
+                "--file",
+                filename
+        );
+        processBuilder.redirectErrorStream(true);
+
+        Process process = processBuilder.start();
+        StringBuilder output = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+            }
+        }
+
+        int exitCode = process.waitFor();
+
+
+        logger.info("image resizer:\n" + output);
+        return "success: " + "[" + exitCode + "]";
+    }
+
     @Description("Cleans up test files")
     private void cleanup(Path expectedPath) throws IOException {
-        Path userDirectory = Path.of("uploads", expectedPath.getParent().toString());
+        Path userDirectory = Path.of(prefix.toString(), expectedPath.getParent().toString());
 
         if (Files.exists(userDirectory)) {
             try (var paths = Files.walk(userDirectory)) {
@@ -128,6 +175,75 @@ public class ImageMaskService {
                 });
             }
         }
+    }
+
+    public String createDataset(String loc, String out_loc, String username, File file, String group, String sub1) throws IOException, InterruptedException {
+
+        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
+        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "cocosynth", "image_composition.py").toAbsolutePath();
+
+        Path inputDirectory = Path.of(loc).toAbsolutePath();
+        Path outputDirectory = Path.of(output_prefix, out_loc, "output").toAbsolutePath();
+
+        Path execDir = setupMlDirectory(inputDirectory, username, file.getName(), group, sub1);
+        Files.createDirectories(outputDirectory);
+
+        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                pythonCommand,
+                scriptPath.toString(),
+                "--input_dir",
+                execDir.resolve("input").toString(),
+                "--output_dir",
+                outputDirectory.toString(),
+                "--count",
+                "1000",
+                "--width",
+                "1024",
+                "--height",
+                "1024",
+                "--silent"
+        );
+        processBuilder.redirectErrorStream(true);
+
+        logger.info("Running image composition: {}", processBuilder.command());
+
+        Process process = processBuilder.start();
+        StringBuilder output = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+            }
+        }
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Image composition failed with exit code " + exitCode + ":\n" + output);
+        }
+
+        return "Success - setup of ml " + output;
+    }
+
+    private Path setupMlDirectory(Path inputDirectory, String username,
+                                  String file, String group, String sub1) throws IOException {
+        Path sourceFile = Path.of(inputDirectory.toString(), file);
+        Path sourceDir = Path.of(this.sourceDir.toString());
+        Path destDir = Paths.get(this.destDir.toString(), username);
+
+        Path subdirectory = destDir.resolve(ml_sub_dir).resolve(group).resolve(sub1);
+
+        // copy dummy file structure using properties file location
+        FileUtils.copyDirectory(sourceDir.toFile(), destDir.toFile());
+
+        Files.createDirectories(subdirectory);
+
+        Files.copy(sourceFile, subdirectory.resolve(
+                sourceFile.getFileName()),
+                StandardCopyOption.REPLACE_EXISTING);
+
+        return destDir;
     }
 
     private String setPythonCmd(){
