@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+import gc
 import json
-import warnings
 import random
+import warnings
 import numpy as np
 from datetime import datetime
 from pathlib import Path
@@ -251,6 +252,7 @@ class ImageComposition():
         mju = MaskJsonUtils(self.output_dir)
 
         # Create all images/masks (with tqdm to have a progress bar)
+        batch_size = 100
         for i in tqdm(range(self.count)):
             # Randomly choose a background
             background_path = random.choice(self.backgrounds)
@@ -307,8 +309,12 @@ class ImageComposition():
                 color_categories
             )
 
-        #Write masks to json
-        mju.write_masks_to_json()
+            del composite, mask, foregrounds, color_categories, fg
+
+            if (i + 1) % batch_size == 0 or i + 1 == self.count:
+                # Images and masks are already on disk; checkpoint their metadata and release batch memory.
+                mju.write_masks_to_json()
+                gc.collect()
 
     def _compose_images(self, foregrounds, background_path):
         # Composes a foreground image and a background image and creates a segmentation mask
@@ -327,8 +333,8 @@ class ImageComposition():
         #     mask: the mask image
 
         # Open background and convert to RGBA
-        background = Image.open(background_path)
-        background = background.convert('RGBA')
+        with Image.open(background_path) as background_file:
+            background = background_file.convert('RGBA')
 
         # Crop background to desired size (self.width x self.height), randomly positioned
         bg_width, bg_height = background.size
@@ -384,7 +390,8 @@ class ImageComposition():
 
     def _transform_foreground(self, fg, fg_path):
         # Open foreground and get the alpha channel
-        fg_image = Image.open(fg_path)
+        with Image.open(fg_path) as source_image:
+            fg_image = source_image.convert('RGBA')
         fg_alpha = np.array(fg_image.getchannel(3))
         assert np.any(fg_alpha == 0), f'foreground needs to have some transparency: {str(fg_path)}'
 

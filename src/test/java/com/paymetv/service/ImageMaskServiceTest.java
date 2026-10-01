@@ -107,6 +107,8 @@ public class ImageMaskServiceTest {
 
         String output = imageMaskService.createDataset(expectedPath.toString(),
                 expectedOutputPath.toString(), this.userDir, file, group, sub1);
+
+        assertTrue(output.contains("success"));
     }
 
     @Description("Cleans up test files")
