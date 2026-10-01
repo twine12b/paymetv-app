@@ -36,6 +36,9 @@ public class ImageMaskService {
     @Value("${ml_sub_dir}")
     private String ml_sub_dir;
 
+    @Value("${ml_dataset_count}")
+    private String dataset_count;
+
     // reads the raw image file and apply the mask to it, then save the masked image to the same directory
     String cmd = setPythonCmd();
 
@@ -198,7 +201,7 @@ public class ImageMaskService {
                 "--output_dir",
                 outputDirectory.toString(),
                 "--count",
-                "1000",
+                dataset_count,
                 "--width",
                 "1024",
                 "--height",
@@ -223,7 +226,7 @@ public class ImageMaskService {
             throw new IOException("Image composition failed with exit code " + exitCode + ":\n" + output);
         }
 
-        return "Success - setup of ml " + output;
+        return "success - setup of ml " + output;
     }
 
     private Path setupMlDirectory(Path inputDirectory, String username,
