@@ -23,6 +23,7 @@ uploads/
 src/main/resources/database/.portforward.pid
 src/main/resources/database/schema.sql
 src/main/resources/ml/.venv
+src/main/resources/ml/code/cocosynth/datasets/
 .idea/dataSources
 
 .secrets
