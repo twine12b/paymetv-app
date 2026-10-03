@@ -113,9 +113,14 @@ python -m pip install -r requirements.txt
 ```
 ```
 git rm -r --cached src/main/resources/ml/.venv/
-
+```
+```
 python3 image_composition.py   --input_dir src/main/resources/ml/code/cocosynth/datasets/test/input   --output_dir src/main/resources/ml/code/cocosynth/datasets/test/output   --count 10   --silent
 
 python3 image_composition.py   --input_dir ./datasets/test/input   --output_dir ./datasets/test/output   --count 10   --width 512   --height 512   --silent
+```
+
+```
+python3 coco_json_utils.py -md ./datasets/testUser12345/output/mask_definitions.json -di ./datasets/testUser12345/output/dataset_info.json
 
 ```

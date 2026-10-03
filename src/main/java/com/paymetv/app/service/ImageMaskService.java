@@ -226,6 +226,8 @@ public class ImageMaskService {
             throw new IOException("Image composition failed with exit code " + exitCode + ":\n" + output);
         }
 
+        Boolean infoCreated = createCocosynthInfo();
+
         return "success - setup of ml " + output;
     }
 
@@ -247,6 +249,40 @@ public class ImageMaskService {
                 StandardCopyOption.REPLACE_EXISTING);
 
         return destDir;
+    }
+
+    private boolean createCocosynthInfo() {
+        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
+        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "cocosynth", "coco_json_utils.py").toAbsolutePath();
+
+        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+        String md_dir = Paths.get(output_prefix, "testUser12345", "output", "mask_definitions.json").toString();
+        String di_dir = Paths.get(output_prefix, "testUser12345", "output", "dataset_info.json").toString();
+
+
+        /**
+         * Python3 coco_json_utils.py
+         * -md ./datasets/testUser12345/output/mask_definitions.json§
+         * */
+
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                pythonCommand,
+                scriptPath.toString(),
+                "-md",
+                md_dir,
+                "-di",
+                di_dir
+        );
+
+        // test if file is empty, if so, return false
+        File mdFile = new File(md_dir);
+        File diFile = new File(di_dir);
+
+            if (mdFile.length() == 0 || diFile.length() == 0) {
+                logger.error("Mask definitions or dataset info file is empty");
+                return false;
+            }
+        return true;
     }
 
     private String setPythonCmd(){
