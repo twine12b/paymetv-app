@@ -7,7 +7,6 @@ opencv-python
 matplotlib
 pandas
 Pillow
-PIL
 plotly
 rembg[gpu]
 scikit-image
