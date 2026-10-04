@@ -3,7 +3,7 @@
 set -e  # Exit on error (but we'll use || true for optional deletions)
 
 namespaces=("default" "streaming")
-teardown_namespaces=("database" "monitoring" "kafka" "streaming" "workflow")
+teardown_namespaces=("database" "monitoring" "kafka" "streaming" "workflow" "jupyter")
 
 # Colors for output
 GREEN='\033[0;32m'
