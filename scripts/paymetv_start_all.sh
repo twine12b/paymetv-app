@@ -11,6 +11,7 @@ monitoring_dir="../src/main/resources/prometheus"
 kafka_dir="../src/main/resources/kafka"
 frontend_dir="../src/main/resources/frontend"
 workflow_dir="../src/main/resources/workflow"
+jupyter_dir="../src/main/resources/jupyter"
 ENVIRONMENT=$1
 
 # Colors - TODO move to common script
@@ -113,6 +114,15 @@ popd > /dev/null
 echo -e "${GREEN}✓ Paymetv app started${NC}"
 echo ""
 
+# Step 8: Starting Jupyter app
+kubectl config set-context --current --namespace=${NAMESPACE-jupyter}
+echo -e "${YELLOW}Step 6: Starting Jupyter app...${NC}"
+pushd $jupyter_dir > /dev/null
+./jupyter_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Jupyter app started${NC}"
+
+
 # Final Summary
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}✓ All Deployments Started!${NC}"
@@ -127,6 +137,7 @@ echo "  ✓ Monitoring Application Grafana - http://localhost:3010"
 echo "  ✓ Monitoring Application Prometheus - http://localhost:9090"
 echo "  ✓ Monitoring Application Alertmanager - http://localhost:9093"
 echo "  ✓ Workflow Application Temporal UI - http://localhost:8088"
+echo "  ✓ Jupyter Application - http://localhost:8000"
 echo ""
 echo -e "$RED Note: It may take a few minutes for all applications to be ready.${NC}"
 echo ""

@@ -1,0 +1,15 @@
+# Values for the upstream Zero to JupyterHub Helm chart.
+# This config is intended for local development; the public proxy stays internal
+# and is reached through kubectl port-forward.
+proxy:
+  service:
+    type: ClusterIP
+
+singleuser:
+  defaultUrl: "/lab"
+  image:
+    name: quay.io/jupyter/scipy-notebook
+    tag: latest
+  storage:
+    type: dynamic
+    capacity: 10Gi
