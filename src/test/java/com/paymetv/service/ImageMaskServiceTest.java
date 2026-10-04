@@ -81,22 +81,8 @@ public class ImageMaskServiceTest {
         assertTrue(output.contains("success"), "Python output:\n" + output);
     }
 
-//    @Test
-//    @Order(2)
-//    @DisplayName("Image masking")
-//    public void callImageMaskingTool_fromJava() throws Exception {
-//
-//        Path expectedPath = Path.of(this.userDir);
-//
-//        String file = "test-resized.png";
-//        String output = imageMaskService.imageMask(expectedPath.toString(), file);
-//
-//        assertFalse(Files.exists(expectedPath));
-//        assertTrue(output.contains("success"), "Python output:\n" + output);
-//    }
-
     @Test
-    @Order(3)
+    @Order(2)
     @DisplayName("Create dataset")
     void createDataset() throws Exception {
         File file = new File("test-resized.png");
