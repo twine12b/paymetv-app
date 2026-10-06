@@ -226,14 +226,8 @@ public class ImageMaskService {
             throw new IOException("Image composition failed with exit code " + exitCode + ":\n" + output);
         }
 
-        Boolean infoCreated = createCocosynthInfo(username);
+        return createCocoAnnotations(outputDirectory, pythonCommand, output);
 
-        if (!infoCreated) {
-            logger.error("Failed to create Cocosynth info files");
-//            throw new IOException("Failed to create Cocosynth info files");
-            return "failure - setup of ml " + output;
-        }
-        return "success - setup of ml " + output;
     }
 
     private Path setupMlDirectory(Path inputDirectory, String username,
@@ -250,7 +244,7 @@ public class ImageMaskService {
         Files.createDirectories(subdirectory);
 
         Files.copy(sourceFile, subdirectory.resolve(
-                sourceFile.getFileName()),
+                        sourceFile.getFileName()),
                 StandardCopyOption.REPLACE_EXISTING);
 
         return destDir;
@@ -277,11 +271,49 @@ public class ImageMaskService {
         File mdFile = new File(md_dir);
         File diFile = new File(di_dir);
 
-            if (mdFile.length() == 0 || diFile.length() == 0) {
-                logger.error("Mask definitions or dataset info file is empty");
-                return false;
-            }
+        if (mdFile.length() == 0 || diFile.length() == 0) {
+            logger.error("Mask definitions or dataset info file is empty");
+            return false;
+        }
         return true;
+    }
+
+    private String createCocoAnnotations(Path outputDirectory, String pythonCommand, StringBuilder output) throws IOException, InterruptedException {
+        Path maskDefinitionsPath = outputDirectory.resolve("mask_definitions.json");
+        Path datasetInfoPath = outputDirectory.resolve("dataset_info.json");
+        if (!Files.isRegularFile(maskDefinitionsPath) || Files.size(maskDefinitionsPath) == 0
+                || !Files.isRegularFile(datasetInfoPath) || Files.size(datasetInfoPath) == 0) {
+            throw new IOException("CoC-Synth did not create non-empty mask_definitions.json and dataset_info.json files");
+        }
+
+        Path annotationScriptPath = Path.of("src", "main", "resources", "ml", "code",
+                "cocosynth", "coco_json_utils.py").toAbsolutePath();
+        Path annotationsPath = outputDirectory.resolve("coco_instances.json");
+        ProcessBuilder annotationProcessBuilder = new ProcessBuilder(
+                pythonCommand,
+                annotationScriptPath.toString(),
+                "--mask_definition", maskDefinitionsPath.toString(),
+                "--dataset_info", datasetInfoPath.toString()
+        );
+        annotationProcessBuilder.redirectErrorStream(true);
+        logger.info("Converting CoC-Synth masks to COCO annotations: {}", annotationProcessBuilder.command());
+
+        Process annotationProcess = annotationProcessBuilder.start();
+        StringBuilder annotationOutput = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(annotationProcess.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                annotationOutput.append(line).append(System.lineSeparator());
+            }
+        }
+        int annotationExitCode = annotationProcess.waitFor();
+        if (annotationExitCode != 0 || !Files.isRegularFile(annotationsPath) || Files.size(annotationsPath) == 0) {
+            throw new IOException("COCO annotation conversion failed with exit code " + annotationExitCode
+                    + ":\n" + annotationOutput);
+        }
+
+        return "success - setup of ml and created COCO annotations at " + annotationsPath
+                + System.lineSeparator() + output + annotationOutput;
     }
 
     private String setPythonCmd(){
