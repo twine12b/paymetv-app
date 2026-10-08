@@ -8,11 +8,13 @@ matplotlib
 pandas
 Pillow
 plotly
-rembg[gpu]
+rembg[cpu]
 scikit-image
 scipy
 scikit-learn
 tensorflow
 tensorflow-io
+torch
+torchvision
 tqdm
 Shapely
