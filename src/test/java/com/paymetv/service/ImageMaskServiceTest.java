@@ -4,6 +4,7 @@ import com.paymetv.app.service.ImageMaskService;
 import jdk.jfr.Description;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.annotation.Order;
 import org.springframework.mock.web.MockMultipartFile;
@@ -15,6 +16,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +29,21 @@ public class ImageMaskServiceTest {
     private MultipartFile multipartFile;
     private final String prefix = "uploads";
     private final String suffix = "output";
+
+    @Value("${ml_dummy_destination_dir}")
+    private String dataset_prefix;
+
+    @Value("${ml_permanent_suffix}")
+    private String dataset_suffix;
+
+    @Value("${ml_coco_model_name}")
+    private String modelName;
+
+    @Value("${ml_coco_metadata_name}")
+    private String cocoMetadataName;
+
+    @Value("${ml_permanent_prefix}")
+    private String model_permanent_prefix;
 
     @Autowired
     private ImageMaskService imageMaskService;
@@ -95,6 +112,32 @@ public class ImageMaskServiceTest {
                 expectedOutputPath.toString(), this.userDir, file, group, sub1);
 
         assertTrue(output.contains("success"));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("Create Machine Learning Model")
+    void createMachineLearningModel() throws Exception {
+        String user = "testUser12345";
+        String dataset_suffix = "/output";
+        Path datasetPath = Path.of(dataset_prefix, user, dataset_suffix);
+        String output = imageMaskService.createMachineLearningModel(datasetPath, user);
+
+        assertTrue(output.contains("success"), "Python output:\n" + output);
+
+        Path modelPath = Path.of(model_permanent_prefix, user);
+
+        System.out.println("Model path: " + modelPath.toString());
+
+        // TODO - check files have been created in the model directory
+        assertTrue(Files.exists(modelPath.resolve("cocosynth_model.pth")),
+                "Model file not found in the expected directory: "
+                        + datasetPath.resolve("cocosynth_model.pth").toString());
+
+        assertTrue(Files.exists(modelPath.resolve("cocosynth_model_metadata.json")),
+                "Model file not found in the expected directory: "
+                        + datasetPath.resolve("cocosynth_model_metadata.json").toString());
+
     }
 
     @Description("Cleans up test files")

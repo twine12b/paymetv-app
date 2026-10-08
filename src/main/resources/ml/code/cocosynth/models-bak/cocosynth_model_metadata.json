@@ -1,0 +1,12 @@
+{
+    "model": "Faster R-CNN ResNet50 FPN V2",
+    "epoch": 1,
+    "categories": {
+        "1": "000624"
+    },
+    "category_id_to_label": {
+        "1": 1
+    },
+    "dataset_directory": "src/main/resources/ml/code/cocosynth/datasets/testUser12345/output",
+    "annotation_file": "src/main/resources/ml/code/cocosynth/datasets/testUser12345/output/coco_instances.json"
+}

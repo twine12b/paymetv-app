@@ -3,6 +3,7 @@ package com.paymetv.app.service;
 import jdk.jfr.Description;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,8 +40,29 @@ public class ImageMaskService {
     @Value("${ml_dataset_count}")
     private String dataset_count;
 
+    @Value("${ml_permanent_prefix}")
+    private Path modelPath;
+
+    @Value("${ml_permanent_suffix}")
+    private Path modelPathSuffix;
+
+    @Value("${ml_coco_model_name}")
+    private String modelName;
+
+    @Value("${ml_coco_metadata_name}")
+    private String cocoMetadataName;
+
+    @Value("${training_batch-size}")
+    private int trainingBatchSize;
+
+    @Value("${training_epochs}")
+    private int trainingEpochs;
+
+    @Value("${training_max-image-size}")
+    private int trainingMaxImageSize;
+
     // reads the raw image file and apply the mask to it, then save the masked image to the same directory
-    String cmd = setPythonCmd();
+    private final String cmd = setPythonCmd();
 
     public String sayHi () { return "Hello from ImageMaskService!";}
 
@@ -49,14 +71,16 @@ public class ImageMaskService {
         Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
         Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "background_removal_tool.py").toAbsolutePath();
 
+        int dotIndex = filename.lastIndexOf('.');
+        String inputFileName = (dotIndex != -1) ? filename.substring(0, dotIndex) : filename;
+
         Path inputDirectory = Path.of(prefix.toString(), loc).toAbsolutePath();
-        String inputFileName = "test.jpeg";
-        Path inputPath = inputDirectory.resolve(inputFileName);
-        Path outputPath = inputDirectory.resolve("output").resolve("test.png");
+        Path inputPath = inputDirectory.resolve(filename);
+        Path outputPath = inputDirectory.resolve("output").resolve(inputFileName + ".png");
         String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
 
         Files.createDirectories(inputDirectory);
-        Path seedImagePath = Path.of("test.jpeg").toAbsolutePath();
+        Path seedImagePath = Path.of(filename).toAbsolutePath();
         Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
         Files.deleteIfExists(outputPath);
 
@@ -66,7 +90,7 @@ public class ImageMaskService {
                 "--location",
                 inputDirectory.toString(),
                 "--file",
-                inputFileName
+                filename
         );
         processBuilder.redirectErrorStream(true);
 
@@ -316,7 +340,92 @@ public class ImageMaskService {
                 + System.lineSeparator() + output + annotationOutput;
     }
 
-    private String setPythonCmd(){
+    public String createMachineLearningModel(@NonNull Path datasetPath, String userdir) throws IOException, InterruptedException  {
+        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
+        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "train.py").toAbsolutePath();
+
+        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                pythonCommand,
+                "-u",
+                scriptPath.toString(),
+                "--dataset",
+                datasetPath.toString(),
+                "--epochs",
+                String.valueOf(trainingEpochs),
+                "--batch-size",
+                String.valueOf(trainingBatchSize),
+                "--max-image-size",
+                String.valueOf(trainingMaxImageSize)
+        );
+
+        processBuilder.redirectErrorStream(true);
+
+        logger.info("Running Machine Learning Model creation: {}", processBuilder.command());
+
+        Process process = processBuilder.start();
+        StringBuilder output = new StringBuilder();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+                logger.info("Machine learning training: {}", line);
+            }
+        }
+        int exitCode = process.waitFor();
+
+        if (exitCode == 0) {
+            // Store the model files in the model directory and teardown learning material
+            storeModelFiles(datasetPath, modelName, userdir);
+            storeModelFiles(datasetPath, cocoMetadataName, userdir);
+            cleanupLearningMaterial(userdir);
+        }
+
+        if (exitCode != 0) {
+            throw new IOException("Machine Learning Model creation failed with exit code " + exitCode + ":\n" + output);
+        }
+
+        return "success - created machine learning model at " + datasetPath;
+    }
+
+    private void cleanupLearningMaterial(String userDir) throws IOException {
+        if (Files.exists(Path.of(destDir.toString(), userDir))) {
+            try (var paths = Files.walk(Path.of(destDir.toString(), userDir))) {
+                paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Stores the machine learning model files in the permanent local storage directory.
+     * @param datasetPath
+     * @param file
+     * @param user_dir
+     * @throws IOException
+     */
+    public void storeModelFiles(Path datasetPath, String file, String user_dir) throws IOException {
+        logger.info("Storing machine learning model at: {}", datasetPath);
+        logger.info("Model file to store: {}", file);
+
+        Path saveTo = Path.of(modelPath.toString(), user_dir);
+
+        Files.createDirectories(saveTo);
+        Files.copy(datasetPath.resolve(file),
+                saveTo.resolve(file),
+               StandardCopyOption.REPLACE_EXISTING);
+
+        logger.info("Model file stored: {}", datasetPath.toString() + "/" + file);
+    }
+
+    private String setPythonCmd() {
         String os = System.getProperty("os.name").toLowerCase();
 
         if (os.contains("win")) {
@@ -333,4 +442,5 @@ public class ImageMaskService {
         }
         return null;
     }
+
 }
