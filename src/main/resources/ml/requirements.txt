@@ -6,6 +6,7 @@ numpy
 opencv-python
 matplotlib
 pandas
+psutil
 Pillow
 plotly
 rembg[cpu]
