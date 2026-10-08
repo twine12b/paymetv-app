@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import torch
+import psutil
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torchvision
@@ -18,6 +19,42 @@ from torchvision.models.detection import (
 )
 
 logger = logging.getLogger(__name__)
+MAX_MEMORY_BYTES = 2 * 1024 ** 3
+PROCESS = psutil.Process(os.getpid())
+
+
+def manage_memory(device, context):
+    memory_bytes = PROCESS.memory_info().rss
+    if memory_bytes <= MAX_MEMORY_BYTES:
+        return
+
+    logger.warning(
+        "Process memory is %.2f GiB after %s (limit %.2f GiB); "
+        "running garbage collection and releasing device cache",
+        memory_bytes / 1024 ** 3,
+        context,
+        MAX_MEMORY_BYTES / 1024 ** 3,
+    )
+    collected_objects = gc.collect()
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+    elif device.type == "mps":
+        torch.mps.empty_cache()
+
+    memory_bytes = PROCESS.memory_info().rss
+    logger.info(
+        "Memory management after %s: collected %d objects; "
+        "process RSS %.2f GiB",
+        context,
+        collected_objects,
+        memory_bytes / 1024 ** 3,
+    )
+    if memory_bytes > MAX_MEMORY_BYTES:
+        raise MemoryError(
+            f"Training process uses {memory_bytes / 1024 ** 3:.2f} GiB "
+            f"after memory cleanup, exceeding the "
+            f"{MAX_MEMORY_BYTES / 1024 ** 3:.0f} GiB limit"
+        )
 
 # ============================================================
 # MEMORY SETTINGS
@@ -315,22 +352,28 @@ def train_one_epoch(
                 running_loss = progress_state["total_loss"]
 
             elapsed = time.monotonic() - epoch_started
+            memory_gib = PROCESS.memory_info().rss / 1024 ** 3
             if completed_batches:
                 logger.info(
                     "Epoch %d heartbeat: %d/%d batches completed, "
-                    "average loss %.4f, elapsed %.1fs",
+                    "average loss %.4f, memory %.2f/%.0f GiB, elapsed %.1fs",
                     epoch,
                     completed_batches,
                     total_batches,
                     running_loss / completed_batches,
+                    memory_gib,
+                    MAX_MEMORY_BYTES / 1024 ** 3,
                     elapsed,
                 )
             else:
                 logger.info(
                     "Epoch %d heartbeat: processing first batch; "
-                    "0/%d batches completed, elapsed %.1fs",
+                    "0/%d batches completed, memory %.2f/%.0f GiB, "
+                    "elapsed %.1fs",
                     epoch,
                     total_batches,
+                    memory_gib,
+                    MAX_MEMORY_BYTES / 1024 ** 3,
                     elapsed,
                 )
 
@@ -403,6 +446,7 @@ def train_one_epoch(
             del losses
             if device.type == "cuda":
                 torch.cuda.empty_cache()
+            manage_memory(device, f"batch {batch_index + 1} of epoch {epoch}")
     finally:
         stop_progress.set()
         progress_thread.join()
@@ -574,6 +618,7 @@ def main():
     number_of_classes = len(dataset.categories) + 1
     model = create_model(number_of_classes)
     model.to(device)
+    manage_memory(device, "model initialization")
 
     # --------------------------------------------------------
     # Optimizer
