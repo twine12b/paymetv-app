@@ -1,0 +1,17 @@
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: ml-trainer
+  namespace: ml
+spec:
+  target:
+    service: ml-trainer
+    port: 8080
+  rules:
+    - hosts:
+        - paymetv.co.uk
+        - ml-trainer-proxy
+        - ml-trainer-proxy.ml.svc.cluster.local
+  scalingMetric:
+    concurrency:
+      targetValue: 2

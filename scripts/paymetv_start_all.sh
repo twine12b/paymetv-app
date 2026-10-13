@@ -11,7 +11,8 @@ monitoring_dir="../src/main/resources/prometheus"
 kafka_dir="../src/main/resources/kafka"
 frontend_dir="../src/main/resources/frontend"
 workflow_dir="../src/main/resources/workflow"
-jupyter_dir="../src/main/resources/jupyter"
+ml_dir="../src/main/resources/ml"
+keda_dir="../src/main/resources/keda"
 ENVIRONMENT=$1
 
 # Colors - TODO move to common script
@@ -114,13 +115,22 @@ popd > /dev/null
 echo -e "${GREEN}✓ Paymetv app started${NC}"
 echo ""
 
-# Step 8: Starting Jupyter app
-kubectl config set-context --current --namespace=${NAMESPACE-jupyter}
-echo -e "${YELLOW}Step 6: Starting Jupyter app...${NC}"
-pushd $jupyter_dir > /dev/null
-./jupyter_startup.sh
+# Step 8: Starting ML trainer app
+echo -e "${YELLOW}Step 7: Starting ML trainer app...${NC}"
+pushd "$ml_dir" > /dev/null
+./ml_startup.sh "${ENVIRONMENT}"
 popd > /dev/null
-echo -e "${GREEN}✓ Jupyter app started${NC}"
+echo -e "${GREEN}✓ ML trainer app started${NC}"
+echo "  ✓ ML scripts API - https://paymetv.co.uk/ml"
+echo ""
+
+# KEDA must start after the ML namespace/service exist and after the app startup
+# has installed the environment's ClusterIssuer.
+echo -e "${YELLOW}Starting KEDA autoscaling...${NC}"
+pushd "$keda_dir" > /dev/null
+./keda_startup.sh "${ENVIRONMENT}"
+popd > /dev/null
+echo -e "${GREEN}✓ KEDA autoscaling started${NC}"
 
 
 # Final Summary
@@ -137,7 +147,7 @@ echo "  ✓ Monitoring Application Grafana - http://localhost:3010"
 echo "  ✓ Monitoring Application Prometheus - http://localhost:9090"
 echo "  ✓ Monitoring Application Alertmanager - http://localhost:9093"
 echo "  ✓ Workflow Application Temporal UI - http://localhost:8088"
-echo "  ✓ Jupyter Application - http://localhost:8000"
+echo "  ✓ ML Scripts API - https://paymetv.co.uk/ml"
 echo ""
 echo -e "$RED Note: It may take a few minutes for all applications to be ready.${NC}"
 echo ""

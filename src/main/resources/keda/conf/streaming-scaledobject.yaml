@@ -1,0 +1,21 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: lighttpd
+  namespace: streaming
+spec:
+  scaleTargetRef:
+    name: lighttpd
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  cooldownPeriod: 300
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: lighttpd
+        metricName: requests
+        metricType: AverageValue
+        threshold: "3"
+        activationThreshold: "1"
+        activationMetricType: AverageValue

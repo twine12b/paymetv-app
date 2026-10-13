@@ -477,10 +477,12 @@ def train_one_epoch(
 # ============================================================
 # SAVE MODEL
 # ============================================================
-def save_model(model, dataset, dataset_dir, epoch):
+def save_model(model, dataset, dataset_dir, output_dir, epoch):
     dataset_dir = Path(dataset_dir)
-    model_path = dataset_dir / "cocosynth_model.pth"
-    metadata_path = dataset_dir / "cocosynth_model_metadata.json"
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    model_path = output_dir / "cocosynth_model.pth"
+    metadata_path = output_dir / "cocosynth_model_metadata.json"
 
     # --------------------------------------------------------
     # Save CPU version of model
@@ -543,6 +545,11 @@ def main():
         type=Path,
         help="Cocosynth output directory",
     )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory for model checkpoints; defaults to the dataset directory",
+    )
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument(
@@ -560,6 +567,7 @@ def main():
     parser.add_argument("--learning-rate", type=float, default=0.005)
     parser.add_argument("--model", type=str, default="fasterrcnn")
     args = parser.parse_args()
+    output_dir = args.output_dir or args.dataset
 
     # --------------------------------------------------------
     # Device
@@ -667,7 +675,7 @@ def main():
         # ----------------------------------------------------
         # Save checkpoint
         # ----------------------------------------------------
-        save_model(model, dataset, args.dataset, epoch)
+        save_model(model, dataset, args.dataset, output_dir, epoch)
 
         # ----------------------------------------------------
         # Explicit memory cleanup

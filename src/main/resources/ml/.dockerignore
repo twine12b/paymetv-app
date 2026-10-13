@@ -1,0 +1,11 @@
+.venv/
+code/.venv/
+**/__pycache__/
+**/*.py[cod]
+.idea/
+.DS_Store
+image_in/
+image_out/
+code/image1.jpeg
+code/cocosynth/datasets/
+code/cocosynth/models*/
