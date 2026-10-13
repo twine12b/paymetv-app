@@ -1,7 +1,8 @@
-# requirements.txt for PayMeTV Machine Learning Pipeline
-
-jupyter
-notebook
+# General ML and image-processing development dependencies.
+# The standalone Kubernetes trainer uses requirements1.txt (CPU) or
+# requirements2.txt (CUDA) to keep its runtime image focused on train.py.
+#jupyter
+#notebook
 numpy
 opencv-python
 matplotlib
@@ -19,3 +20,7 @@ torch
 torchvision
 tqdm
 Shapely
+
+--extra-index-url https://download.pytorch.org/whl/cu126
+#torch==2.10.0+cu126
+#torchvision==0.25.0+cu126

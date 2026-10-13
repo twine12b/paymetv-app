@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+psutil
+Pillow
+numpy
+opencv-python-headless
+matplotlib
+scikit-image
+shapely
+tqdm
+rembg[cpu]
+torch
+torchvision

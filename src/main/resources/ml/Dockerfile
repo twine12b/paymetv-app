@@ -1,24 +1,32 @@
-# Installing CUDA and Tensorflow https://youtu.be/X4F80-CSbig?si=mtZQ74IGFqhaUObO
-FROM nvidia/cuda:12.2.0-base-ubuntu22.04
+# Build from src/main/resources/ml:
+#   docker buildx build --platform linux/amd64,linux/arm64 --target cpu -t paymetv/ml-trainer:cpu .
+#   docker buildx build --platform linux/amd64 --target cuda -t paymetv/ml-trainer:cuda .
 
-# Install Python and pip
+FROM python:3.12-slim AS cpu
+WORKDIR /opt/ml
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+COPY requirements1.txt requirements2.txt ./
+
+COPY init.sh ./
+RUN chmod +x init.sh
+CMD ["./init.sh"]
+
+COPY service.py ./service.py
+COPY code/ ./code/
+EXPOSE 8080
+CMD ["uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8080"]
+
+FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 AS cuda
+ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    python3-dev \
-    git \
-    && \
-    rm -rf /var/lib/apt/lists/*
+    python3 python3-pip ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -sf /usr/bin/python3 /usr/local/bin/python
+WORKDIR /opt/ml
+COPY requirements1.txt requirements2.txt ./
+RUN pip3 install --no-cache-dir -r requirements2.txt
+COPY service.py ./service.py
+COPY code/ ./code/
 
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt
-
-# Clone cocosynth into /opt
-RUN rm -rf /opt/cocosynth 2>/dev/null || true
-RUN git clone https://github.com/akTwelve/cocosynth.git /opt/cocosynth
-RUN pip3 install -r /opt/cocosynth/requirements.txt
-COPY /code/ /opt/cocosynth/code/
-
-
-# https://technofob.com/2019/06/14/how-to-compile-tensorflow-2-0-with-avx2-fma-instructions-on-mac/
-#RUN #pip install tensorflow-cpu-optimized tensorflow-io # -avx2 -fma, tensorflow-cpu-optimized,
+EXPOSE 8080
+CMD ["python3", "-m", "uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8080"]
