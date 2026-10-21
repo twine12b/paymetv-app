@@ -4,7 +4,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 MANIFEST_DIR="${SCRIPT_DIR}/conf"
 ENVIRONMENT="${1:-local}"
+
+ROOT_DIR="$(CDPATH= cd -- "${SCRIPT_DIR}/../../../.." && pwd -P)"
+source "${ROOT_DIR}/scripts/commons/util.sh"
 KEDA_NAMESPACE="keda"
+
+echo -e "${BLUE}=========================================${NC}"
+echo -e "${BLUE}PayMeTV Keda Setup Script${NC}"
+echo -e "${BLUE}=========================================${NC}"
+echo ""
 
 for command_name in kubectl helm envsubst; do
   if ! command -v "${command_name}" >/dev/null 2>&1; then
@@ -21,7 +29,7 @@ case "${ENVIRONMENT}" in
 esac
 export ISSUER_NAME
 
-echo "Installing or updating KEDA and the KEDA HTTP Add-on..."
+echo -e "${YELLOW}Installing or updating KEDA and the KEDA HTTP Add-on...${NC}"
 helm repo add kedacore https://kedacore.github.io/charts --force-update
 helm repo update kedacore
 helm upgrade --install keda kedacore/keda \
@@ -30,6 +38,8 @@ helm upgrade --install keda kedacore/keda \
 helm upgrade --install http-add-on kedacore/keda-add-ons-http \
   --namespace "${KEDA_NAMESPACE}" \
   --wait --timeout 10m
+echo -e "${GREEN}✓ Keda install complete.${NC}"
+echo ""
 
 kubectl wait --for=condition=Established --timeout=120s \
   crd/scaledobjects.keda.sh
@@ -40,6 +50,7 @@ kubectl wait --for=condition=Established --timeout=120s \
 kubectl get namespace ml >/dev/null 2>&1 || kubectl create namespace ml
 kubectl get namespace streaming >/dev/null 2>&1 || kubectl create namespace streaming
 
+echo -e "${YELLOW}Apply Keda manifests...${NC}"
 kubectl apply -f "${MANIFEST_DIR}/ml-interceptorroute.yaml"
 kubectl apply -f "${MANIFEST_DIR}/ml-scaledobject.yaml"
 kubectl apply -f "${MANIFEST_DIR}/streaming-scaledobject.yaml"
@@ -47,6 +58,8 @@ envsubst < "${MANIFEST_DIR}/ml-certificate.yaml" | kubectl apply -f -
 kubectl -n "${KEDA_NAMESPACE}" wait --for=condition=Ready \
   certificate/ml-trainer-ingress-cert --timeout=10m
 kubectl apply -f "${MANIFEST_DIR}/ml-ingress.yaml"
+echo -e "${GREEN}✓ Keda manifests deployed${NC}"
+echo ""
 
-echo "KEDA and its HTTP Add-on are ready."
-echo "KEDA manifests applied from ${MANIFEST_DIR}."
+echo -e "${YELLOW}KEDA and its HTTP Add-on are ready. ${NC}"
+echo -e "${YELLOW}KEDA manifests applied from ${MANIFEST_DIR}. ${NC}"

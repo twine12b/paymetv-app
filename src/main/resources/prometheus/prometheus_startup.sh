@@ -1,5 +1,8 @@
 #!/bin/sh
 
+ROOT_DIR="../../../.."
+source "${ROOT_DIR}/scripts/commons/util.sh"
+
 conf_dir="./conf"
 
 #teardown port forwards
@@ -7,6 +10,11 @@ conf_dir="./conf"
 #kill $(lsof -t -i:3000) 2>/dev/null || true
 #kill $(lsof -t -i:9093) 2>/dev/null || true
 #kill $(lsof -t -i:8000) 2>/dev/null || true
+
+echo -e "${BLUE}=========================================${NC}"
+echo -e "${BLUE}PayMeTV Prometheus Monitoring Setup Script${NC}"
+echo -e "${BLUE}=========================================${NC}"
+echo ""
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts/
 helm repo update

@@ -1,0 +1,15 @@
+{
+    "info": {
+      "description": "Paymetv Artifact Dataset",
+      "url": "paymetv.co.uk/pmtvartifactdataset",
+      "version": "1.0",
+      "contributor": "Richard Renaud",
+      "year": 2026,
+      "date_created": "02/10/2026"
+    },
+    "license": {
+      "id": 1,
+      "name": "PMTV artifact License",
+      "url": "paymetv.co.uk/pmtvartifactlicense"
+    }
+}

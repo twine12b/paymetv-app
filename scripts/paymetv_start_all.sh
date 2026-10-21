@@ -2,6 +2,9 @@
 
 set -e
 
+ROOT_DIR="./"
+source "${ROOT_DIR}/commons/util.sh"
+
 NAMESPACE="${1:default 2:-streaming 3:-database 4:-monitoring 5:-kafka}"
 K8S_DIR="src/main/resources/k8s"
 app_dir="../src/main/resources/conf"
@@ -14,13 +17,6 @@ workflow_dir="../src/main/resources/workflow"
 ml_dir="../src/main/resources/ml"
 keda_dir="../src/main/resources/keda"
 ENVIRONMENT=$1
-
-# Colors - TODO move to common script
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
 
 if [ -z "$ENVIRONMENT" ]; then
   echo -e "${RED}Usage: $0 <ENVIRONMENT>${NC}"
@@ -141,7 +137,7 @@ echo ""
 echo "Deployment components:"
 echo "  ✓ Kafka Application - http://localhost:8082"
 echo "  ✓ PayMeTV Application - http://localhost:8080"
-#echo "  ✓ Streaming Application - http://localhost:3000"
+echo "  ✓ Streaming Application - http://localhost:3000"
 echo "  ✓ Database Application - http://localhost:3306"
 echo "  ✓ Monitoring Application Grafana - http://localhost:3010"
 echo "  ✓ Monitoring Application Prometheus - http://localhost:9090"

@@ -5,7 +5,8 @@
 set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-root_dir="$(cd "$SCRIPT_DIR/../../../../" && pwd -P)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../../../../" && pwd -P)"
+source "${ROOT_DIR}/scripts/commons/util.sh"
 
 echo "Script directory: $SCRIPT_DIR"
 
@@ -23,6 +24,17 @@ if [[ -z "$SECRET_NAME" ]]; then
   echo "Example: $0 dev"
   exit 1
 fi
+
+echo -e "${BLUE}=========================================${NC}"
+echo -e "${BLUE}PayMeTV Admin Server Setup Script${NC}"
+echo -e "${BLUE}=========================================${NC}"
+echo ""
+
+sh "${ROOT_DIR}/scripts/commons/checksum.sh" \
+    "$SCRIPT_DIR" \
+    "${ROOT_DIR}/Dockerfile" \
+    sh -c 'docker build -t paymetv/paymetv-app:latest "$1" -f "$1/Dockerfile" && if kubectl -n default get deployment/paymetv-app-deployment >/dev/null 2>&1; then kubectl -n default rollout restart deployment/paymetv-app-deployment; fi' \
+    sh "$ROOT_DIR"
 
 # Handle shortcuts or use literal secret name
 if [ "$SECRET_NAME" == "prod" ]; then

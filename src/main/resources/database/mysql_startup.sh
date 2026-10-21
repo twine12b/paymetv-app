@@ -1,19 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e  # Exit on error
 
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+MANIFEST_DIR="${SCRIPT_DIR}/conf"
+ROOT_DIR="$(CDPATH= cd -- "${SCRIPT_DIR}/../../../.." && pwd -P)"
+source "${ROOT_DIR}/scripts/commons/util.sh"
 NAMESPACE="database"
-
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
+
+sh "${ROOT_DIR}/scripts/commons/checksum.sh" \
+    "$SCRIPT_DIR" \
+    "${SCRIPT_DIR}/Dockerfile" \
+    sh -c 'docker build -t paymetv/paymetv_db:latest "$1" -f "$1/Dockerfile" && (kubectl get namespace database >/dev/null 2>&1 || kubectl create namespace database) && kubectl -n database apply -f "$1/conf/mysql.yaml" && kubectl -n database rollout restart deployment/mysql-deployment' \
+    sh "$SCRIPT_DIR"
 
 #kubectl get namespace database >/dev/null 2>&1 && echo -e "${YELLOW}Database exists, skipping deletion${NC}" ||
 
@@ -83,7 +87,7 @@ echo ""
 
 # Deploy the database
 echo -e "${YELLOW}Step 4: Deploying the database...${NC}"
-kubectl apply -f conf/mysql.yaml
+kubectl apply -f ${MANIFEST_DIR}/mysql.yaml
 echo "Waiting for mysql deployment to become ready in namespace '${NAMESPACE}'..."
 if ! kubectl -n "${NAMESPACE}" rollout status deployment/mysql-deployment --timeout=300s; then
   echo "Timed out or deployment failed. Showing pod status and recent logs for debugging:"

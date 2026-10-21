@@ -2,15 +2,12 @@
 
 set -e  # Exit on error
 
+ROOT_DIR="../../../.."
+source "${ROOT_DIR}/scripts/commons/util.sh"
+
 NAMESPACE="workflow"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MANIFEST_FILE="${SCRIPT_DIR}/conf/workflow.yaml"
-
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}Temporal Workflow Kubernetes Startup${NC}"

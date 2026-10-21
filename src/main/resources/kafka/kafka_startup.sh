@@ -2,11 +2,9 @@
 
 set -e  # Exit on error
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+ROOT_DIR="$(CDPATH= cd -- "${SCRIPT_DIR}/../../../.." && pwd -P)"
+source "${ROOT_DIR}/scripts/commons/util.sh"
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}PayMeTV Kafka Setup Script${NC}"
