@@ -108,7 +108,7 @@ mvn clean spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=
 -- Run as single block inside of ../resources/ml/ --
 python -m venv .venv /
 source .venv/bin/activate /
-python -m pip install -r requirements.txt
+python -m pip install -r requirements1.txt
 
 ```
 ```

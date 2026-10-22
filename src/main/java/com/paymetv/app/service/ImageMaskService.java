@@ -61,6 +61,12 @@ public class ImageMaskService {
     @Value("${training_max-image-size}")
     private int trainingMaxImageSize;
 
+    @Value("ml_namespace")
+    private String namespace;
+
+    @Value("ml_deployment_name")
+    private String deploymentName;
+
     // reads the raw image file and apply the mask to it, then save the masked image to the same directory
     private final String cmd = setPythonCmd();
 
@@ -84,14 +90,7 @@ public class ImageMaskService {
         Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
         Files.deleteIfExists(outputPath);
 
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                pythonCommand,
-                scriptPath.toString(),
-                "--location",
-                inputDirectory.toString(),
-                "--file",
-                filename
-        );
+        ProcessBuilder processBuilder = buildPythonProcess(loc, filename);
         processBuilder.redirectErrorStream(true);
 
         Process process = processBuilder.start();
@@ -124,14 +123,7 @@ public class ImageMaskService {
         Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
         Files.deleteIfExists(outputPath);
 
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                pythonCommand,
-                scriptPath.toString(),
-                "--location",
-                inputDirectory.toString(),
-                "--file",
-                filename
-        );
+        ProcessBuilder processBuilder = buildPythonProcess(loc, filename);
         processBuilder.redirectErrorStream(true);
 
         Process process = processBuilder.start();
@@ -154,20 +146,12 @@ public class ImageMaskService {
         Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "image_resizer.py").toAbsolutePath();
 
         Path inputDirectory = Path.of(prefix.toString(), loc, "output").toAbsolutePath();
-        String inputFileName = filename;
-        Path inputPath = inputDirectory.resolve(inputFileName);
+        Path inputPath = inputDirectory.resolve(filename);
         Path outputPath = inputDirectory.resolve(inputDirectory).resolve(filename);
 
         String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
 
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                pythonCommand,
-                scriptPath.toString(),
-                "--location",
-                loc,
-                "--file",
-                filename
-        );
+        ProcessBuilder processBuilder = buildPythonProcess(loc, filename);
         processBuilder.redirectErrorStream(true);
 
         Process process = processBuilder.start();
@@ -441,6 +425,17 @@ public class ImageMaskService {
             logger.error("Unknown OS");
         }
         return null;
+    }
+
+    public ProcessBuilder buildPythonProcess(String path, String filename) throws IOException {
+
+        return new ProcessBuilder(
+                "kubectl", "exec", "-i", "-n", namespace,
+                "deploy/" + deploymentName, "--",
+                ".venv/bin/python",
+                "code/" + filename
+        );
+
     }
 
 }

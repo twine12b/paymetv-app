@@ -21,8 +21,9 @@ COPY default_ml_structure /opt/ml/default_ml_structure
 COPY image1.jpeg /opt/ml/image1.jpeg
 
 EXPOSE 8080
-#CMD ["python3", "-m", "uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8080"]
-CMD ["sh", "-c", "mkdir -p /data/testUser12345 && cp -n /opt/ml/image1.jpeg /data/testUser12345/image1.jpeg && exec python3 -m uvicorn service:app --host 0.0.0.0 --port 8080"]
+CMD ["sh", "-c", "mkdir -p /data/testUser12345 \
+     && cp -n /opt/ml/image1.jpeg /data/testUser12345/image1.jpeg \
+     && exec python3 -m uvicorn service:app --host 0.0.0.0 --port 8080"]
 
 # -------------
 
@@ -45,5 +46,6 @@ COPY default_ml_structure /opt/ml/default_ml_structure
 COPY image1.jpeg /opt/ml/image1.jpeg
 
 EXPOSE 8080
-#CMD ["python3", "-m", "uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8080"]
-CMD ["sh", "-c", "mkdir -p /data/testUser12345 && cp -n /opt/ml/image1.jpeg /data/testUser12345/image1.jpeg && exec python3 -m uvicorn service:app --host 0.0.0.0 --port 8080"]
+CMD ["sh", "-c", "mkdir -p /data/testUser12345 \
+     && cp -n /opt/ml/image1.jpeg /data/testUser12345/image1.jpeg \
+     && exec python3 -m uvicorn service:app --host 0.0.0.0 --port 8080"]

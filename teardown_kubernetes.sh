@@ -3,7 +3,7 @@
 set -e  # Exit on error (but we'll use || true for optional deletions)
 
 namespaces=("default" "streaming")
-teardown_namespaces=("database" "monitoring" "kafka" "kafka-monitoring-ui" "streaming" "workflow" "ml" "keda")
+ teardown_namespaces=("database" "monitoring" "kafka" "kafka-monitoring-ui" "streaming" "workflow" "ml" "keda")
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -77,7 +77,10 @@ if command -v helm >/dev/null 2>&1; then
   helm uninstall http-add-on --namespace keda --ignore-not-found --wait --timeout 5m || true
 fi
 
-mapfile -t all_namespaces < <(kubectl get namespaces -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
+all_namespaces=()
+while IFS= read -r namespace; do
+  all_namespaces+=("$namespace")
+done < <(kubectl get namespaces -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
 for namespace in "${all_namespaces[@]}"; do
   kubectl -n "$namespace" delete scaledobjects.keda.sh --all \
     --ignore-not-found=true --wait=true --timeout=30s >/dev/null 2>&1 || true

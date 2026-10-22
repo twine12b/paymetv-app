@@ -18,8 +18,8 @@ spec:
       terminationGracePeriodSeconds: 3600
       containers:
         - name: ml-trainer
-          image: ${IMAGE}
-          imagePullPolicy: IfNotPresent
+          image: paymetv/ml-trainer:cpu
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
