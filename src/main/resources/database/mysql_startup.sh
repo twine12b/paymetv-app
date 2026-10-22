@@ -1,33 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e  # Exit on error
 
-SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
-MANIFEST_DIR="${SCRIPT_DIR}/conf"
-ROOT_DIR="$(CDPATH= cd -- "${SCRIPT_DIR}/../../../.." && pwd -P)"
-source "${ROOT_DIR}/scripts/commons/util.sh"
 NAMESPACE="database"
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
-
-sh "${ROOT_DIR}/scripts/commons/checksum.sh" \
-    "$SCRIPT_DIR" \
-    "${SCRIPT_DIR}/Dockerfile" \
-    sh -c 'docker build -t paymetv/paymetv_db:latest "$1" -f "$1/Dockerfile" && (kubectl get namespace database >/dev/null 2>&1 || kubectl create namespace database) && kubectl -n database apply -f "$1/conf/mysql.yaml" && kubectl -n database rollout restart deployment/mysql-deployment' \
-    sh "$SCRIPT_DIR"
-
-#kubectl get namespace database >/dev/null 2>&1 && echo -e "${YELLOW}Database exists, skipping deletion${NC}" ||
-
-if kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
-  echo -e "${YELLOW}Database namespace already exists${NC}"
-  exit 0
-else
-  echo -e "${YELLOW}Creating database namespace...${NC}"
-  kubectl create namespace "$NAMESPACE"
-fi
 
 # Cleanup: Stop existing port-forward process - TODO move to common script keep (DRY)
 echo -e "${YELLOW}Cleanup: Stopping existing port-forward process...${NC}"
@@ -45,18 +31,23 @@ else
 fi
 echo ""
 
-# teardown the database namespace and all its resources - TODO delete docker volume and kill port-forward
-echo -e "${YELLOW}Step 0: tearing down the database namespace and all its resources...${NC}"
-kubectl delete namespace database --ignore-not-found=true
-kubectl delete pods --all -n database --ignore-not-found=true
-kubectl delete deployments --all -n database --ignore-not-found=true
-kubectl delete services --all -n database --ignore-not-found=true
-kubectl delete secrets --all -n database --ignore-not-found=true
-kubectl delete configmaps --all -n database --ignore-not-found=true
-kubectl delete pvc --all -n database --ignore-not-found=true
-kubectl delete pv --all -n database --ignore-not-found=true
-kubectl delete ingress --all -n database --ignore-not-found=true
-echo -e "${GREEN}✓ database namespace and all its resources deleted${NC}"
+# teardown the database namespace and its resources only when the namespace exists
+echo -e "${YELLOW}Step 0: checking whether the database namespace exists...${NC}"
+if kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1; then
+  echo -e "${YELLOW}Step 0: tearing down the database namespace and all its resources...${NC}"
+  kubectl delete pods --all -n database --ignore-not-found=true
+  kubectl delete deployments --all -n database --ignore-not-found=true
+  kubectl delete services --all -n database --ignore-not-found=true
+  kubectl delete secrets --all -n database --ignore-not-found=true
+  kubectl delete configmaps --all -n database --ignore-not-found=true
+  kubectl delete pvc --all -n database --ignore-not-found=true
+  kubectl delete pv --all -n database --ignore-not-found=true
+  kubectl delete ingress --all -n database --ignore-not-found=true
+  kubectl delete namespace database --ignore-not-found=true
+  echo -e "${GREEN}✓ database namespace and all its resources deleted${NC}"
+else
+  echo -e "${YELLOW}Database namespace does not exist; skipping teardown.${NC}"
+fi
 echo ""
 
 # Build the Docker image - this is only here because I need to amend the push and build script
@@ -87,7 +78,7 @@ echo ""
 
 # Deploy the database
 echo -e "${YELLOW}Step 4: Deploying the database...${NC}"
-kubectl apply -f ${MANIFEST_DIR}/mysql.yaml
+kubectl apply -f conf/mysql.yaml
 echo "Waiting for mysql deployment to become ready in namespace '${NAMESPACE}'..."
 if ! kubectl -n "${NAMESPACE}" rollout status deployment/mysql-deployment --timeout=300s; then
   echo "Timed out or deployment failed. Showing pod status and recent logs for debugging:"

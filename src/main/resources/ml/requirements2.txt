@@ -1,5 +1,6 @@
-fastapi
-uvicorn[standard]
+fastapi[all]==0.141.1
+uvicorn[standard]==0.54.0
+gunicorn==26.2.0
 psutil
 Pillow
 numpy

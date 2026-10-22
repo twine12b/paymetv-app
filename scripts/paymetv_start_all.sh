@@ -57,22 +57,33 @@ echo -e "${GREEN}✓ Kafka app started${NC}"
 echo ""
 
 # Step 3: Starting Database app
-kubectl config set-context --current --namespace=${NAMESPACE-database}
-echo -e "${YELLOW}Step 3: Starting Database app...${NC}"
-pushd $database_dir > /dev/null
-./mysql_startup.sh
-popd > /dev/null
-echo -e "${GREEN}✓ Database app started${NC}"
+if kubectl get namespace database >/dev/null 2>&1; then
+  DATABASE_READY=$(kubectl -n database get deployment mysql-deployment \
+    -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null || true)
+else
+  DATABASE_READY=""
+fi
+
+if [ "${DATABASE_READY}" = "True" ]; then
+  echo -e "${GREEN}✓ Database namespace exists and MySQL deployment is ready; skipping database startup${NC}"
+else
+  kubectl config set-context --current --namespace=${NAMESPACE-database}
+  echo -e "${YELLOW}Step 3: Starting Database app...${NC}"
+  pushd $database_dir > /dev/null
+  ./mysql_startup.sh
+  popd > /dev/null
+  echo -e "${GREEN}✓ Database app started${NC}"
+fi
 echo ""
 
-## Step 4: Starting Streaming app
-#echo -e "${YELLOW}Step 2: Starting Streaming app...${NC}"
-#kubectl config set-context --current --namespace=${NAMESPACE-streaming}
-#pushd $streaming_dir > /dev/null
-#./lighttpd_startup.sh
-#popd > /dev/null
-#echo -e "${GREEN}✓ Streaming app started${NC}"
-#echo ""
+# Step 4: Starting Streaming app
+echo -e "${YELLOW}Step 2: Starting Streaming app...${NC}"
+kubectl config set-context --current --namespace=${NAMESPACE-streaming}
+pushd $streaming_dir > /dev/null
+./lighttpd_startup.sh
+popd > /dev/null
+echo -e "${GREEN}✓ Streaming app started${NC}"
+echo ""
 
 # Step 5: Starting Monitoring app
 kubectl config set-context --current --namespace=${NAMESPACE-monitoring}

@@ -146,6 +146,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/main/resources/kafka/node_modules/wrappy" />
       <excludeFolder url="file://$MODULE_DIR$/src/main/resources/kafka/node_modules/xtend" />
       <excludeFolder url="file://$MODULE_DIR$/src/main/resources/kafka/node_modules/yallist" />
+      <excludeFolder url="file://$MODULE_DIR$/src/main/resources/ml/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/uploads" />
     </content>
   </component>
