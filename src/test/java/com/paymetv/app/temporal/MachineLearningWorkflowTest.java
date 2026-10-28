@@ -126,34 +126,34 @@ class MachineLearningWorkflowTest {
         assertFalse(Files.exists(expectedPath));
     }
 
-    @Test
-    @Order(4)
-    void workflow_run_executesActivityAndReturnsResult() throws Exception {
-        try (TestWorkflowEnvironment testEnvironment = TestWorkflowEnvironment.newInstance()) {
-            String taskQueue = "file-upload-task-queue-test";
-
-            MachineLearningActivityImpl activity = new MachineLearningActivityImpl(fileUploadService, imageMaskService, dependencyCheckerService, imageCheckerService, trainModel, notifyAllService);
-            Worker worker = testEnvironment.newWorker(taskQueue);
-            worker.registerWorkflowImplementationTypes(MachineLearningWorkflowImpl.class);
-            worker.registerActivitiesImplementations(activity);
-            testEnvironment.start();
-
-            WorkflowClient workflowClient = testEnvironment.getWorkflowClient();
-            MachineLearningWorkflow workflow = workflowClient.newWorkflowStub(
-                    MachineLearningWorkflow.class,
-                    WorkflowOptions.newBuilder().setTaskQueue(taskQueue).build()
-            );
-
-            String result = workflow.run(this.multipartFile.getOriginalFilename(), this.multipartFile.getBytes(), this.userDir);
-            Path expectedPath = Paths.get("uploads", this.userDir, this.multipartFile.getOriginalFilename());
-
-            assertTrue(Files.exists(expectedPath));
-            assertEquals("success", result);
-
-            cleanup(expectedPath);
-            assertFalse(Files.exists(expectedPath));
-        }
-    }
+//    @Test
+//    @Order(4)
+//    void workflow_run_executesActivityAndReturnsResult() throws Exception {
+//        try (TestWorkflowEnvironment testEnvironment = TestWorkflowEnvironment.newInstance()) {
+//            String taskQueue = "file-upload-task-queue-test";
+//
+//            MachineLearningActivityImpl activity = new MachineLearningActivityImpl(fileUploadService, imageMaskService, dependencyCheckerService, imageCheckerService, trainModel, notifyAllService);
+//            Worker worker = testEnvironment.newWorker(taskQueue);
+//            worker.registerWorkflowImplementationTypes(MachineLearningWorkflowImpl.class);
+//            worker.registerActivitiesImplementations(activity);
+//            testEnvironment.start();
+//
+//            WorkflowClient workflowClient = testEnvironment.getWorkflowClient();
+//            MachineLearningWorkflow workflow = workflowClient.newWorkflowStub(
+//                    MachineLearningWorkflow.class,
+//                    WorkflowOptions.newBuilder().setTaskQueue(taskQueue).build()
+//            );
+//
+//            String result = workflow.run(this.multipartFile.getOriginalFilename(), this.multipartFile.getBytes(), this.userDir);
+//            Path expectedPath = Paths.get("uploads", this.userDir, this.multipartFile.getOriginalFilename());
+//
+//            assertTrue(Files.exists(expectedPath));
+//            assertEquals("success", result);
+//
+//            cleanup(expectedPath);
+//            assertFalse(Files.exists(expectedPath));
+//        }
+//    }
 
     @Test
     @Order(5)

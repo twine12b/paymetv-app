@@ -4,7 +4,6 @@ import com.paymetv.app.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -49,13 +48,8 @@ public class MachineLearningActivityImpl implements MachineLearningActivity {
     }
 
     @Override
-    public String imageBackgroundRemover(String loc, String filename) throws IOException, InterruptedException {
-        return imageMaskService.removeBackground(loc, filename);
-    }
-
-    @Override
-    public String imageMask(String loc, String userDir) throws IOException, InterruptedException {
-        return imageMaskService.imageMask(loc, userDir);
+    public Integer imageBackgroundRemover(String loc, String py_script, String filename) throws IOException, InterruptedException {
+        return imageMaskService.removeBackground(loc, py_script, filename);
     }
 
     @Override

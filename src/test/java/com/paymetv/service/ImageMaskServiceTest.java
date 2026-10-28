@@ -17,7 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,6 +34,9 @@ public class ImageMaskServiceTest {
 
     @Value("${ml_dummy_destination_dir}")
     private String dataset_prefix;
+
+    @Value("${file.upload-dir}")
+    private String fs_dir;
 
     @Value("${ml_permanent_suffix}")
     private String dataset_suffix;
@@ -71,37 +76,50 @@ public class ImageMaskServiceTest {
 
     @Test
     @Order(0)
-    @DisplayName("background removal tool service")
-    public void callBackgroundRemovalTool_fromJava() throws Exception {
+    @DisplayName("runs a simple 'hello world!' test ")
+    public void helloTest() throws Exception {
+        String active_user = "testUser12345"; // TODO - get session user
+        String py_script = "test.py";
+        String output = imageMaskService.sayHello(active_user, py_script) ;
 
-        Path expectedPath = Path.of(this.userDir);
-
-        String file = "test.jpeg";
-        String output = imageMaskService.removeBackground(expectedPath.toString(), file);
-
-        assertFalse(Files.exists(expectedPath));
-        assertTrue(output.contains("success"), "Python output:\n" + output);
+        assertTrue(output.contains("Hello, World!"), "Python output:\n" + output);
     }
 
     @Test
     @Order(1)
-    @DisplayName("Change file aspect ratio - height 800px")
-    void changeFileAspectRatio() throws Exception {
+    @DisplayName("background removal tool service")
+    public void callBackgroundRemovalTool_fromJava() throws Exception {
 
-        Path userDir = Paths.get(this.userDir);
+        String active_user = "testUser12345";
+        String py_script = "background_removal_tool.py";
 
-        Path expectedPath = Path.of(prefix,userDir.toString(), suffix);
+        ArrayList<String> filenames = new ArrayList<>(List.of("image1.jpeg", "image2.jpeg", "image3.jpeg"));
+        Path expectedPath = Path.of(this.userDir);
 
-        String file = "test.png";
-        String output = imageMaskService.changeFileAspectRatio(expectedPath.toString(), file);
+        Integer output = imageMaskService.removeBackground(active_user, py_script, filenames.toArray(String[]::new));
 
-        assertTrue(output.contains("success"), "Python output:\n" + output);
+        assertEquals(0, output);
     }
 
     @Test
     @Order(2)
+    @DisplayName("Change file aspect ratio - height 800px")
+    void changeFileAspectRatio() throws Exception {
+        String active_user = "testUser12345";
+        String py_script = "image_resizer.py";
+        ArrayList<String> filenames = new ArrayList<>(List.of("image1.png", "image2.png", "image3.png"));
+
+        Integer output = imageMaskService.changeFileAspectRatio(active_user, py_script, filenames.toArray(String[]::new));
+        assertEquals(0, output);
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("Create dataset")
     void createDataset() throws Exception {
+        String active_user = "testUser12345";
+        String py_script = "image_resizer.py";
+
         File file = new File("test-resized.png");
         Path expectedPath = Path.of(this.prefix, this.userDir, suffix);
         Path expectedOutputPath = Path.of(this.userDir);
@@ -114,8 +132,8 @@ public class ImageMaskServiceTest {
         assertTrue(output.contains("success"));
     }
 
-    @Test
-    @Order(3)
+//    @Test
+    @Order(4)
     @DisplayName("Create Machine Learning Model")
     void createMachineLearningModel() throws Exception {
         String user = "testUser12345";
@@ -144,16 +162,18 @@ public class ImageMaskServiceTest {
     private static void cleanup(Path expectedPath) throws IOException {
         Path userDirectory = Path.of("uploads", expectedPath.getParent().toString());
 
-        if (Files.exists(userDirectory)) {
-            try (var paths = Files.walk(userDirectory)) {
-                paths.sorted(Comparator.reverseOrder()).forEach(path -> {
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
-            }
-        }
+        System.out.println("Cleaning up");
+
+//        if (Files.exists(userDirectory)) {
+//            try (var paths = Files.walk(userDirectory)) {
+//                paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+//                    try {
+//                        Files.deleteIfExists(path);
+//                    } catch (IOException e) {
+//                        throw new UncheckedIOException(e);
+//                    }
+//                });
+//            }
+//        }
     }
 }

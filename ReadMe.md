@@ -124,3 +124,9 @@ python3 image_composition.py   --input_dir ./datasets/test/input   --output_dir 
 python3 coco_json_utils.py -md ./datasets/testUser12345/output/mask_definitions.json -di ./datasets/testUser12345/output/dataset_info.json
 
 ```
+
+```
+kubectl exec -n ml deployment/ml-trainer -- python3 /opt/ml/code/background_removal_tool.py \
+  --location /data/testUser12345 \
+  --file image1.jpeg
+```

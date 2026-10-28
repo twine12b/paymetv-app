@@ -2,21 +2,20 @@
 
 set -e
 
-ROOT_DIR="./"
-source "${ROOT_DIR}/commons/util.sh"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
+source "${SCRIPT_DIR}/commons/util.sh"
 
-NAMESPACE="${1:default 2:-streaming 3:-database 4:-monitoring 5:-kafka}"
-K8S_DIR="src/main/resources/k8s"
-app_dir="../src/main/resources/conf"
-streaming_dir="../src/main/resources/streaming"
-database_dir="../src/main/resources/database"
-monitoring_dir="../src/main/resources/prometheus"
-kafka_dir="../src/main/resources/kafka"
-frontend_dir="../src/main/resources/frontend"
-workflow_dir="../src/main/resources/workflow"
-ml_dir="../src/main/resources/ml"
-keda_dir="../src/main/resources/keda"
-ENVIRONMENT=$1
+app_dir="${ROOT_DIR}/src/main/resources/conf"
+streaming_dir="${ROOT_DIR}/src/main/resources/streaming"
+database_dir="${ROOT_DIR}/src/main/resources/database"
+monitoring_dir="${ROOT_DIR}/src/main/resources/prometheus"
+kafka_dir="${ROOT_DIR}/src/main/resources/kafka"
+frontend_dir="${ROOT_DIR}/src/main/resources/frontend"
+workflow_dir="${ROOT_DIR}/src/main/resources/workflow"
+ml_dir="${ROOT_DIR}/src/main/resources/ml"
+keda_dir="${ROOT_DIR}/src/main/resources/keda"
+ENVIRONMENT="${1:-}"
 
 if [ -z "$ENVIRONMENT" ]; then
   echo -e "${RED}Usage: $0 <ENVIRONMENT>${NC}"
@@ -39,18 +38,18 @@ echo -e "${BLUE}=========================================${NC}"
 echo ""
 
 # Step 1: building frontend
-kubectl config set-context --current --namespace=${NAMESPACE-default}
+kubectl config set-context --current --namespace=default
 echo -e "${YELLOW}Step 0: Building frontend...${NC}"
-pushd $frontend_dir > /dev/null
+pushd "$frontend_dir" > /dev/null
 ./frontend_startup.sh
 popd > /dev/null
 echo -e "${GREEN}✓ Frontend built${NC}"
 echo ""
 
 # Step 2: Starting Kafka app (Paymetv dependes on it)
-kubectl config set-context --current --namespace=${NAMESPACE-kafka}
+kubectl config set-context --current --namespace=kafka
 echo -e "${YELLOW}Step 5: Starting Kafka app...${NC}"
-pushd $kafka_dir > /dev/null
+pushd "$kafka_dir" > /dev/null
 ./kafka_startup.sh
 popd > /dev/null
 echo -e "${GREEN}✓ Kafka app started${NC}"
@@ -67,9 +66,9 @@ fi
 if [ "${DATABASE_READY}" = "True" ]; then
   echo -e "${GREEN}✓ Database namespace exists and MySQL deployment is ready; skipping database startup${NC}"
 else
-  kubectl config set-context --current --namespace=${NAMESPACE-database}
+  kubectl config set-context --current --namespace=database
   echo -e "${YELLOW}Step 3: Starting Database app...${NC}"
-  pushd $database_dir > /dev/null
+  pushd "$database_dir" > /dev/null
   ./mysql_startup.sh
   popd > /dev/null
   echo -e "${GREEN}✓ Database app started${NC}"
@@ -78,17 +77,17 @@ echo ""
 
 # Step 4: Starting Streaming app
 echo -e "${YELLOW}Step 2: Starting Streaming app...${NC}"
-kubectl config set-context --current --namespace=${NAMESPACE-streaming}
-pushd $streaming_dir > /dev/null
+kubectl config set-context --current --namespace=streaming
+pushd "$streaming_dir" > /dev/null
 ./lighttpd_startup.sh
 popd > /dev/null
 echo -e "${GREEN}✓ Streaming app started${NC}"
 echo ""
 
 # Step 5: Starting Monitoring app
-kubectl config set-context --current --namespace=${NAMESPACE-monitoring}
+kubectl config set-context --current --namespace=monitoring
 echo -e "${YELLOW}Step 4: Starting Monitoring app...${NC}"
-pushd $monitoring_dir > /dev/null
+pushd "$monitoring_dir" > /dev/null
 ./prometheus_startup.sh
 sleep 10
 # TODO: fix why prometheus is not starting first time
@@ -98,14 +97,13 @@ echo -e "${GREEN}✓ Monitoring app started${NC}"
 echo ""
 
 # Step 6: Starting Workflow app
-kubectl config set-context --current --namespace=${NAMESPACE-workflow}
+kubectl config set-context --current --namespace=workflow
 echo -e "${YELLOW}Step 5: Starting Workflow app...${NC}"
-pushd $workflow_dir > /dev/null
+pushd "$workflow_dir" > /dev/null
 ./workflow_startup.sh
 popd > /dev/null
 echo -e "${GREEN}✓ Workflow app started${NC}"
 echo ""
-
 
 # Must start after database and workflow
 # Step 7: Starting Paymetv app
@@ -130,6 +128,30 @@ popd > /dev/null
 echo -e "${GREEN}✓ ML trainer app started${NC}"
 echo "  ✓ ML scripts API - https://paymetv.co.uk/ml"
 echo ""
+
+## Must start after database and workflow
+## Step 7: Starting Paymetv app
+#echo -e "${YELLOW}Step 1: Starting Paymetv app...${NC}"
+#echo -e "${YELLOW}Setting namespace to default...${NC}"
+#kubectl config set-context --current --namespace=default
+#echo -e "${GREEN}✓ Namespace set...${NC}"
+#
+#echo -e "${YELLOW}Deploying Paymetv app...${NC}"
+#kubectl config set-context --current --namespace=default
+#pushd "$app_dir" > /dev/null
+#./setup_cert_manager.sh ${ENVIRONMENT}
+#popd > /dev/null
+#echo -e "${GREEN}✓ Paymetv app started${NC}"
+#echo ""
+#
+## Step 8: Starting ML trainer app
+#echo -e "${YELLOW}Step 7: Starting ML trainer app...${NC}"
+#pushd "$ml_dir" > /dev/null
+#./ml_startup.sh "${ENVIRONMENT}"
+#popd > /dev/null
+#echo -e "${GREEN}✓ ML trainer app started${NC}"
+#echo "  ✓ ML scripts API - https://paymetv.co.uk/ml"
+#echo ""
 
 # KEDA must start after the ML namespace/service exist and after the app startup
 # has installed the environment's ClusterIssuer.

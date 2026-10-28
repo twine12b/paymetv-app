@@ -20,7 +20,7 @@ public class FileUploadActivityImpl implements FileUploadActivity {
 
     @Override
     public String execute() {
-        return fileUploadService.sayHi();
+        return "";
     }
 
     @Override
@@ -44,7 +44,7 @@ public class FileUploadActivityImpl implements FileUploadActivity {
     }
 
     @Override
-    public String imageMask(MultipartFile multipartFile, String userDir) {
-        return imageMaskService.sayHi();
+    public String imageMask(MultipartFile file, String userDir) {
+        return "";
     }
 }

@@ -1,0 +1,1 @@
+print("Hello, World! - comming from Python ML pod")

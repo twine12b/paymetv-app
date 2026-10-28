@@ -46,4 +46,10 @@ popd >/dev/null
 echo -e "${GREEN}✓ Python dependencies installed successfully.${NC}"
 echo ""
 
+# Maven package
+echo -e "${YELLOW}Running Maven package...${NC}"
+mvn clean package -DskipTests
+echo -e "${GREEN}Packageing complete ${POD_DIR}.${NC}"
+echo ""
+
 

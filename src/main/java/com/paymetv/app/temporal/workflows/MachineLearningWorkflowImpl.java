@@ -32,22 +32,14 @@ public class MachineLearningWorkflowImpl implements MachineLearningWorkflow {
     );
 
     @Override
-    public String run(String filename, byte[] fileData, String userDir) {
+    public String run(String filename, byte[] fileData, String py_script, String userDir) {
         logger.info("File Upload Started");
         fileUploadActivity.uploadFileBytes(filename, fileData, userDir);
 
         // Remove background image
         try {
             logger.info("Image background removal Started");
-            fileUploadActivity.imageBackgroundRemover(userDir, filename);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-        }
-
-        // Add image mask
-        try {
-            logger.info("Image masking Started");
-            fileUploadActivity.imageMask(userDir, filename);
+            fileUploadActivity.imageBackgroundRemover(userDir, py_script, filename);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
