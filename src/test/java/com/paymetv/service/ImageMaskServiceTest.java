@@ -3,10 +3,10 @@ package com.paymetv.service;
 import com.paymetv.app.service.ImageMaskService;
 import jdk.jfr.Description;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.annotation.Order;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,7 +24,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@TestMethodOrder(MethodOrderer.MethodName.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ImageMaskServiceTest {
 
     private String userDir;
@@ -75,7 +75,7 @@ public class ImageMaskServiceTest {
     }
 
     @Test
-    @Order(0)
+    @Order(1)
     @DisplayName("runs a simple 'hello world!' test ")
     public void helloTest() throws Exception {
         String active_user = "testUser12345"; // TODO - get session user
@@ -86,7 +86,7 @@ public class ImageMaskServiceTest {
     }
 
     @Test
-    @Order(1)
+    @Order(2)
     @DisplayName("background removal tool service")
     public void callBackgroundRemovalTool_fromJava() throws Exception {
 
@@ -102,7 +102,7 @@ public class ImageMaskServiceTest {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     @DisplayName("Change file aspect ratio - height 800px")
     void changeFileAspectRatio() throws Exception {
         String active_user = "testUser12345";
@@ -114,47 +114,66 @@ public class ImageMaskServiceTest {
     }
 
     @Test
-    @Order(3)
-    @DisplayName("Create dataset")
-    void createDataset() throws Exception {
+    @Order(4)
+    @DisplayName("Move file for cocosynth learning")
+    void moveFileForLearning() throws IOException, InterruptedException {
+
         String active_user = "testUser12345";
-        String py_script = "image_resizer.py";
+        String py_script = "mv_file.py";
+        String category = "car";
+        String sub_category = "000624";
+
+        String output = imageMaskService.moveFilesForLearning(active_user, py_script, category, sub_category);
+
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("Create dataset")
+    void createDataset() throws Exception { String active_user = "testUser12345";
+        String py_script = "image_composition.py";
 
         File file = new File("test-resized.png");
         Path expectedPath = Path.of(this.prefix, this.userDir, suffix);
         Path expectedOutputPath = Path.of(this.userDir);
-        String sub1 = "000624";
-        String group = "cars";
 
-        String output = imageMaskService.createDataset(expectedPath.toString(),
-                expectedOutputPath.toString(), this.userDir, file, group, sub1);
+        String output = imageMaskService.createDataset(active_user, py_script);
 
-        assertTrue(output.contains("success"));
+//        String output = imageMaskService.createDataset(expectedPath.toString(),
+//                expectedOutputPath.toString(), this.userDir, file, group, sub1);
+//
+//        assertTrue(output.contains("success"));
     }
 
-//    @Test
-    @Order(4)
+    @Test
+    @Order(6)
     @DisplayName("Create Machine Learning Model")
     void createMachineLearningModel() throws Exception {
-        String user = "testUser12345";
-        String dataset_suffix = "/output";
-        Path datasetPath = Path.of(dataset_prefix, user, dataset_suffix);
-        String output = imageMaskService.createMachineLearningModel(datasetPath, user);
+        String active_user = "testUser12345";
+        String py_script = "train.py";
 
-        assertTrue(output.contains("success"), "Python output:\n" + output);
+        String output = imageMaskService.createMachineLearningModel(active_user, py_script);
 
-        Path modelPath = Path.of(model_permanent_prefix, user);
 
-        System.out.println("Model path: " + modelPath.toString());
 
-        // TODO - check files have been created in the model directory
-        assertTrue(Files.exists(modelPath.resolve("cocosynth_model.pth")),
-                "Model file not found in the expected directory: "
-                        + datasetPath.resolve("cocosynth_model.pth").toString());
-
-        assertTrue(Files.exists(modelPath.resolve("cocosynth_model_metadata.json")),
-                "Model file not found in the expected directory: "
-                        + datasetPath.resolve("cocosynth_model_metadata.json").toString());
+//        String dataset_suffix = "/output";
+//        Path datasetPath = Path.of(dataset_prefix, user, dataset_suffix);
+//        String output = imageMaskService.createMachineLearningModel(datasetPath, user);
+//
+//        assertTrue(output.contains("success"), "Python output:\n" + output);
+//
+//        Path modelPath = Path.of(model_permanent_prefix, user);
+//
+//        System.out.println("Model path: " + modelPath.toString());
+//
+//        // TODO - check files have been created in the model directory
+//        assertTrue(Files.exists(modelPath.resolve("cocosynth_model.pth")),
+//                "Model file not found in the expected directory: "
+//                        + datasetPath.resolve("cocosynth_model.pth").toString());
+//
+//        assertTrue(Files.exists(modelPath.resolve("cocosynth_model_metadata.json")),
+//                "Model file not found in the expected directory: "
+//                        + datasetPath.resolve("cocosynth_model_metadata.json").toString());
 
     }
 

@@ -2,16 +2,16 @@
 
 set -e
 
-ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-
+source "./scripts/commons/util.sh"
 RESOURCES_DIR="${ROOT_DIR}/src/main/resources"
-source "${ROOT_DIR}/scripts/commons/util.sh"
+
+echo "$RESOURCES_DIR"
+echo "$ROOT_DIR"
 
 POD_DIRS=(conf database ml streaming)
 if (($# > 0)); then
   POD_DIRS=("$@")
 fi
-
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}✓ PayMeTV New Project initialisation${NC}"
@@ -39,7 +39,7 @@ done
 # CPU or CUDA requirements based on whether an NVIDIA GPU is available.
 ML_DIR="${RESOURCES_DIR}/ml"
 echo -e "${YELLOW}Installing Python dependencies in ${ML_DIR}...${NC}"
-pushd "$ML_DIR" >/dev/null
+pushd "${RESOURCES_DIR}/ml" >/dev/null
 bash ./init.sh
 popd >/dev/null
 
@@ -48,8 +48,8 @@ echo ""
 
 # Maven package
 echo -e "${YELLOW}Running Maven package...${NC}"
+cd ${ROOT_DIR}
 mvn clean package -DskipTests
 echo -e "${GREEN}Packageing complete ${POD_DIR}.${NC}"
 echo ""
-
 

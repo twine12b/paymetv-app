@@ -110,20 +110,39 @@ echo ""
 
 # Step 3: Delete namespaces (optional, but will delete all resources within)
 #kubectl delete namespace default
+pending_namespaces=()
 for namespace in "${teardown_namespaces[@]}"; do
   echo -e "${BLUE}Deleting namespace: ${namespace}${NC}"
 
   # Try graceful deletion first and wait for completion.
   kubectl delete namespace "$namespace" --ignore-not-found=true --wait=true --timeout=60s || true
 
-  # KEDA custom resources are handled above. Do not strip namespace finalizers
-  # while namespaced content still remains; that only hides the controller issue.
+  # A namespace can remain Terminating after all content has been removed if a
+  # controller left a namespace finalizer behind. Only clear namespace-level
+  # finalizers once Kubernetes confirms that no namespaced content remains.
   if kubectl get namespace "$namespace" >/dev/null 2>&1; then
-    echo -e "${YELLOW}  Namespace ${namespace} is still terminating; remaining resources:${NC}"
-    kubectl get namespace "$namespace" -o jsonpath='{.status.conditions[?(@.type=="NamespaceContentRemaining")].message}{"\n"}' 2>/dev/null || true
+    content_remaining=$(kubectl get namespace "$namespace" \
+      -o jsonpath='{.status.conditions[?(@.type=="NamespaceContentRemaining")].status}' \
+      2>/dev/null || true)
+    if [[ "$content_remaining" == "False" ]]; then
+      echo -e "${YELLOW}  Namespace ${namespace} has no remaining content; clearing stale namespace finalizers.${NC}"
+      kubectl patch namespace "$namespace" --type=merge \
+        -p '{"spec":{"finalizers":[]}}' >/dev/null 2>&1 || true
+      kubectl wait --for=delete "namespace/${namespace}" --timeout=30s >/dev/null 2>&1 || true
+    fi
+
+    if kubectl get namespace "$namespace" >/dev/null 2>&1; then
+      echo -e "${YELLOW}  Namespace ${namespace} is still terminating:${NC}"
+      kubectl get namespace "$namespace" -o jsonpath='{range .status.conditions[*]}{.type}{": "}{.status}{" - "}{.message}{"\n"}{end}' 2>/dev/null || true
+      pending_namespaces+=("$namespace")
+    fi
   fi
 done
-echo -e "${GREEN}✓ Namespaces deleted${NC}"
+if ((${#pending_namespaces[@]} == 0)); then
+  echo -e "${GREEN}✓ Namespaces deleted${NC}"
+else
+  echo -e "${RED}✗ These namespaces are still terminating: ${pending_namespaces[*]}${NC}"
+fi
 echo ""
 
 # Step 4: Clean up docker images (optional)
