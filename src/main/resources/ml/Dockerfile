@@ -19,10 +19,17 @@ COPY code/ ./code/
 COPY default_ml_structure /opt/ml/default_ml_structure
 
 COPY image1.jpeg /opt/ml/image1.jpeg
+COPY image1.jpeg /opt/ml/image2.jpeg
+COPY image1.jpeg /opt/ml/image3.jpeg
 
 EXPOSE 8080
 CMD ["sh", "-c", "mkdir -p /data/testUser12345 \
      && cp -n /opt/ml/image1.jpeg /data/testUser12345/image1.jpeg \
+     && cp -n /opt/ml/image1.jpeg /data/testUser12345/image2.jpeg \
+     && cp -n /opt/ml/image1.jpeg /data/testUser12345/image3.jpeg \
+     && chmod +rwx /opt/ml/code/mv_file.sh \
+     && mkdir -p /data/testUser12345/datasets/input \
+     && cp -R /opt/ml/default_ml_structure/. /data/testUser12345/datasets/ \
      && exec python3 -m uvicorn service:app --host 0.0.0.0 --port 8080"]
 
 # -------------
@@ -48,4 +55,8 @@ COPY image1.jpeg /opt/ml/image1.jpeg
 EXPOSE 8080
 CMD ["sh", "-c", "mkdir -p /data/testUser12345 \
      && cp -n /opt/ml/image1.jpeg /data/testUser12345/image1.jpeg \
+     && cp -n /opt/ml/image1.jpeg /data/testUser12345/image2.jpeg \
+     && cp -n /opt/ml/image1.jpeg /data/testUser12345/image3.jpeg \
+     && mkdir -p /data/testUser12345/datasets/input \
+     && cp -R /opt/ml/default_ml_structure/. /data/testUser12345/datasets/ \
      && exec python3 -m uvicorn service:app --host 0.0.0.0 --port 8080"]

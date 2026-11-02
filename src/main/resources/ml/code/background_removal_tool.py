@@ -1,8 +1,7 @@
-from rembg import remove
+from rembg import new_session, remove
 from pathlib import Path
 import argparse
 import sys
-from io import BytesIO
 from PIL import Image
 
 def find_candidate_file(base_dir: Path, candidates):
@@ -60,47 +59,71 @@ def find_candidate_file(base_dir: Path, candidates):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Remove background from an input image using rembg")
+    parser = argparse.ArgumentParser(description="Remove backgrounds from images using rembg")
     parser.add_argument("--location", required=True, help="Directory containing the input file.")
-    parser.add_argument("--file", required=True, help="Input filename inside the location directory.")
+    parser.add_argument(
+        "--file", "--files", dest="files", required=True, nargs="+",
+        help="One or more input filenames inside the location directory.",
+    )
+    parser.add_argument(
+        "--output-dir", "--output", dest="output_dir", required=True,
+        help="Directory where output PNG files will be written.",
+    )
     args = parser.parse_args()
 
     location_path = Path(args.location)
     if not location_path.is_absolute():
         location_path = location_path.resolve()
 
-    input_path = location_path / args.file
-    if not input_path.exists() or not input_path.is_file():
-        print(f"Error: input file not found: {input_path}", file=sys.stderr)
-        sys.exit(2)
-
-    removed_dir = location_path / "output"
-    removed_dir.mkdir(parents=True, exist_ok=True)
-    output_path = removed_dir / f"{input_path.stem}.png"
-
-    print(f"Loading input image_in: {input_path}")
+    removed_dir = Path(args.output_dir)
+    if not removed_dir.is_absolute():
+        removed_dir = location_path / removed_dir
     try:
-        input_bytes = input_path.read_bytes()
+        removed_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
-        print(f"Failed to read input file: {e}", file=sys.stderr)
-        sys.exit(4)
+        print(f"Failed to create output directory {removed_dir}: {e}", file=sys.stderr)
+        sys.exit(3)
 
-    print("Removing background (this may take a few seconds)...")
     try:
-        result_bytes = remove(input_bytes)
+        # Load the model once and reuse it for every image in this run.
+        session = new_session("u2netp")
     except Exception as e:
-        print(f"rembg.remove() failed: {e}", file=sys.stderr)
+        print(f"Failed to initialize rembg u2netp model: {e}", file=sys.stderr)
         sys.exit(5)
 
-    try:
-        # Force PNG with alpha channel so the background is transparent.
-        result_image = Image.open(BytesIO(result_bytes)).convert("RGBA")
-        result_image.save(output_path, format="PNG")
-    except Exception as e:
-        print(f"Failed to write output file: {e}", file=sys.stderr)
-        sys.exit(6)
+    failures = 0
+    for filename in args.files:
+        input_path = Path(filename)
+        if not input_path.is_absolute():
+            input_path = location_path / input_path
+        if not input_path.is_file():
+            print(f"Error: input file not found: {input_path}", file=sys.stderr)
+            failures += 1
+            continue
 
-    print("Success")
+        output_path = removed_dir / f"{input_path.stem}.png"
+        input_image = None
+        result_image = None
+        try:
+            print(f"Loading input image: {input_path}")
+            with Image.open(input_path) as source_image:
+                input_image = source_image.convert("RGB")
+
+            print(f"Removing background: {input_path.name}")
+            result_image = remove(input_image, session=session)
+            result_image.convert("RGBA").save(output_path, format="PNG")
+            print(f"Success: {output_path}")
+        except Exception as e:
+            print(f"Failed to process {input_path}: {e}", file=sys.stderr)
+            failures += 1
+        finally:
+            if input_image is not None:
+                input_image.close()
+            if result_image is not None:
+                result_image.close()
+
+    if failures:
+        sys.exit(1)
 
 
 if __name__ == '__main__':

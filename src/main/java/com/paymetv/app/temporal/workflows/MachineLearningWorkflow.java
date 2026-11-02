@@ -7,7 +7,7 @@ import io.temporal.workflow.WorkflowMethod;
 public interface MachineLearningWorkflow {
 
     @WorkflowMethod
-    String run(String filename, byte[] fileData, String userDir);
+    String run(String filename, byte[] fileData, String script, String userDir);
 
 //    @Workflactivities to the MachineLearningWorkflow
 

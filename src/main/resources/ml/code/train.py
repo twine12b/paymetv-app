@@ -3,6 +3,8 @@ import gc
 import json
 import logging
 import os
+import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -93,9 +95,20 @@ class CocosynthCocoDataset(Dataset):
                 f"{self.dataset_dir}"
             )
 
+        # Training datasets produced by image_composition.py contain source
+        # metadata (mask_definitions.json and dataset_info.json), not COCO
+        # annotations. Generate the COCO file before selecting an annotation
+        # file so we never mistake either metadata file for COCO.
+        coco_files = sorted(
+            (path for path in json_files if path.name == "coco_instances.json"),
+            key=lambda path: (len(path.parts), str(path)),
+        )
+        if not coco_files:
+            coco_files = self._generate_coco_annotations()
+
         preferred = [
             f
-            for f in json_files
+            for f in (coco_files or json_files)
             if any(
                 x in f.name.lower()
                 for x in ["coco", "annotation", "instances"]
@@ -104,7 +117,12 @@ class CocosynthCocoDataset(Dataset):
         if preferred:
             self.annotation_file = preferred[0]
         else:
-            self.annotation_file = json_files[0]
+            raise FileNotFoundError(
+                f"No COCO annotation file found in {self.dataset_dir}. "
+                "Expected coco_instances.json or a filename containing "
+                "'coco', 'annotation', or 'instances'. Found JSON files: "
+                + ", ".join(str(path.relative_to(self.dataset_dir)) for path in json_files)
+            )
 
         print()
         print(
@@ -123,7 +141,23 @@ class CocosynthCocoDataset(Dataset):
         self.categories = self.coco.get("categories", [])
 
         if not self.images:
-            raise ValueError("COCO JSON contains no images")
+            # A stale or incomplete COCO file can also be regenerated from
+            # the source metadata, if this dataset has it.
+            regenerated = self._generate_coco_annotations()
+            if regenerated:
+                self.annotation_file = regenerated[0]
+                with open(self.annotation_file, "r", encoding="utf-8") as f:
+                    self.coco = json.load(f)
+                self.images = self.coco.get("images", [])
+                self.annotations = self.coco.get("annotations", [])
+                self.categories = self.coco.get("categories", [])
+            if not self.images:
+                keys = ", ".join(sorted(self.coco.keys())) if isinstance(self.coco, dict) else type(self.coco).__name__
+                raise ValueError(
+                    f"COCO annotation file {self.annotation_file} contains no "
+                    f"images (top-level keys: {keys}). Check that the dataset "
+                    "has generated images and a valid mask_definitions.json."
+                )
         if not self.categories:
             raise ValueError("COCO JSON contains no categories")
 
@@ -160,6 +194,41 @@ class CocosynthCocoDataset(Dataset):
         print("Categories:")
         for label, name in self.category_names.items():
             print(f" {label}: {name}")
+
+    def _generate_coco_annotations(self):
+        """Generate COCO annotations from a Cocosynth output directory."""
+        source_pairs = [
+            (mask_file, mask_file.parent / "dataset_info.json")
+            for mask_file in self.dataset_dir.rglob("mask_definitions.json")
+            if (mask_file.parent / "dataset_info.json").is_file()
+        ]
+        if not source_pairs:
+            return []
+
+        mask_file, info_file = sorted(source_pairs, key=lambda pair: str(pair[0]))[0]
+        converter = Path(__file__).resolve().parent / "cocosynth" / "coco_json_utils.py"
+        if not converter.is_file():
+            raise FileNotFoundError(
+                f"COCO annotations are missing and converter was not found: {converter}"
+            )
+        logger.info(
+            "Generating COCO annotations from %s and %s",
+            mask_file,
+            info_file,
+        )
+        subprocess.run(
+            [
+                sys.executable,
+                str(converter),
+                "--mask_definition",
+                str(mask_file),
+                "--dataset_info",
+                str(info_file),
+            ],
+            check=True,
+        )
+        annotation_file = mask_file.parent / "coco_instances.json"
+        return [annotation_file] if annotation_file.is_file() else []
 
     # --------------------------------------------------------
     # Locate image
@@ -346,7 +415,7 @@ def train_one_epoch(
     stop_progress = threading.Event()
 
     def log_periodic_progress():
-        while not stop_progress.wait(30):
+        while not stop_progress.wait(10):
             with progress_lock:
                 completed_batches = progress_state["completed_batches"]
                 running_loss = progress_state["total_loss"]
@@ -646,7 +715,10 @@ def main():
     # --------------------------------------------------------
     # Mixed precision scaler
     # --------------------------------------------------------
-    scaler = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
+    scaler = torch.amp.GradScaler(
+        "cuda",
+        enabled=device.type == "cuda",
+    )
 
     # --------------------------------------------------------
     # Training

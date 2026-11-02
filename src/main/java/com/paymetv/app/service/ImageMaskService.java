@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -23,7 +23,10 @@ public class ImageMaskService {
     Logger logger = LoggerFactory.getLogger(ImageMaskService.class);
 
     @Value("${file.upload-dir}")
-    private Path prefix;
+    private String fs_dir;
+
+    @Value("${ml_script_dir}")
+    private String script_dir;
 
     @Value("${ml_dir}")
     private String output_prefix;
@@ -61,74 +64,30 @@ public class ImageMaskService {
     @Value("${training_max-image-size}")
     private int trainingMaxImageSize;
 
-    @Value("ml_namespace")
+    @Value("${ml_namespace:ml}")
     private String namespace;
 
-    @Value("ml_deployment_name")
+    @Value("${ml_deployment_name:ml-trainer}")
     private String deploymentName;
 
     // reads the raw image file and apply the mask to it, then save the masked image to the same directory
     private final String cmd = setPythonCmd();
 
-    public String sayHi () { return "Hello from ImageMaskService!";}
+    private ProcessBuilder createProcess(List<String> command) {
 
-    public String removeBackground(String loc, String filename) throws IOException, InterruptedException {
-
-        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
-        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "background_removal_tool.py").toAbsolutePath();
-
-        int dotIndex = filename.lastIndexOf('.');
-        String inputFileName = (dotIndex != -1) ? filename.substring(0, dotIndex) : filename;
-
-        Path inputDirectory = Path.of(prefix.toString(), loc).toAbsolutePath();
-        Path inputPath = inputDirectory.resolve(filename);
-        Path outputPath = inputDirectory.resolve("output").resolve(inputFileName + ".png");
-        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
-
-        Files.createDirectories(inputDirectory);
-        Path seedImagePath = Path.of(filename).toAbsolutePath();
-        Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
-        Files.deleteIfExists(outputPath);
-
-        ProcessBuilder processBuilder = buildPythonProcess(loc, filename);
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.redirectErrorStream(true);
-
-        Process process = processBuilder.start();
-        StringBuilder output = new StringBuilder();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append(System.lineSeparator());
-            }
-        }
-
-        int exitCode = process.waitFor();
-
-        return "removing background successful";
+        return processBuilder;
     }
 
-    public String imageMask(String loc, String filename) throws IOException, InterruptedException {
-        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
-        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "image_masking_tool.py").toAbsolutePath();
+    public String sayHello(String active_user, String py_script) throws IOException, InterruptedException {
 
-        Path inputDirectory = Path.of(prefix.toString(), loc, "output").toAbsolutePath();
-        Path inputPath = inputDirectory.resolve(filename);
-        Path outputPath = inputDirectory.resolve(inputDirectory + "/masks").resolve(filename);
+        List<String> command = defaultCommandList(active_user, py_script);
+        ProcessBuilder proc = createProcess(command);
 
-        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+        Process process = proc.start();
 
-        Files.createDirectories(inputDirectory);
-        Path seedImagePath = Path.of(prefix.toString(), loc, "output", filename).toAbsolutePath();
-        Files.copy(seedImagePath, inputPath, StandardCopyOption.REPLACE_EXISTING);
-        Files.deleteIfExists(outputPath);
-
-        ProcessBuilder processBuilder = buildPythonProcess(loc, filename);
-        processBuilder.redirectErrorStream(true);
-
-        Process process = processBuilder.start();
         StringBuilder output = new StringBuilder();
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -137,43 +96,112 @@ public class ImageMaskService {
         }
 
         int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Python hello script failed in namespace '" + namespace
+                    + "' on deployment '" + deploymentName + "' with exit code " + exitCode + ":\n" + output);
+        }
+        logger.info("ML pod hello script output: {}", output.toString().trim());
 
-        return "masking image successful";
+        return output.toString().trim();
     }
 
-    public String changeFileAspectRatio(String loc, String filename) throws IOException, InterruptedException {
-        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
-        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "image_resizer.py").toAbsolutePath();
+    /**
+     * python3 background_removal_tool.py \
+     *   --location /data/testUser12345 \
+     *   --output-dir /data/testUser12345/output \
+     *   --file image1.jpeg image2.jpeg
+     */
+    public Integer removeBackground(String active_user, String py_script, String... filenames) throws IOException, InterruptedException {
+        String suffix = "/output";
 
-        Path inputDirectory = Path.of(prefix.toString(), loc, "output").toAbsolutePath();
-        Path inputPath = inputDirectory.resolve(filename);
-        Path outputPath = inputDirectory.resolve(inputDirectory).resolve(filename);
+        if (filenames == null || filenames.length == 0) {
+            throw new IllegalArgumentException("At least one input filename is required");
+        }
 
-        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+        List<String> command = defaultCommandList(active_user, py_script);
+        command.add("--output-dir");
+        command.add(fs_dir + active_user + suffix);
+        command.add("--location");
+        command.add("/data/" + active_user);
+        command.add("--file");
+        command.addAll(Arrays.asList(filenames));
 
-        ProcessBuilder processBuilder = buildPythonProcess(loc, filename);
-        processBuilder.redirectErrorStream(true);
+        ProcessBuilder proc = createProcess(command);
+        Process process = proc.start();
 
-        Process process = processBuilder.start();
         StringBuilder output = new StringBuilder();
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 output.append(line).append(System.lineSeparator());
+                logger.info("Background removal: {}", line);
             }
         }
 
         int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Python background removal failed with exit code " + exitCode
+                    + ":\n" + output);
+        }
+        logger.info("ML pod removeBackground script output: {}", output.toString().trim());
 
+        return exitCode;
+    }
 
-        logger.info("image resizer:\n" + output);
-        return "success: " + "[" + exitCode + "]";
+    /**
+     * python3 background_removal_tool.py
+     *  --location /data/testUser12345/output
+     *  --output /data/testUser12345/result
+     *  --file image1.png image2.png image3.png
+     *
+     * @param active_user
+     * @param py_script
+     * @param filenames
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public Integer changeFileAspectRatio(String active_user, String py_script, String... filenames) throws IOException, InterruptedException {
+        String suffix = "/result";
+
+        if (filenames == null || filenames.length == 0) {
+            throw new IllegalArgumentException("At least one input filename is required");
+        }
+
+        List<String> command = defaultCommandList(active_user, py_script);
+
+        command.add("--location");
+        command.add(fs_dir + active_user + "/output");
+        command.add("--output-dir");
+        command.add(fs_dir + active_user + suffix);
+        command.add("--file");
+        command.addAll(Arrays.asList(filenames));
+
+        ProcessBuilder proc = createProcess(command);
+        Process process = proc.start();
+
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+                logger.info("Change File Aspect: {}", line);
+            }
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Python change file aspect failed with exit code " + exitCode
+                    + ":\n" + output);
+        }
+        logger.info("ML pod changeFileAspectRatio script output: {}", output.toString().trim());
+
+                return exitCode;
     }
 
     @Description("Cleans up test files")
     private void cleanup(Path expectedPath) throws IOException {
-        Path userDirectory = Path.of(prefix.toString(), expectedPath.getParent().toString());
+        Path userDirectory = Path.of(fs_dir.toString(), expectedPath.getParent().toString());
 
         if (Files.exists(userDirectory)) {
             try (var paths = Files.walk(userDirectory)) {
@@ -188,74 +216,54 @@ public class ImageMaskService {
         }
     }
 
-    public String createDataset(String loc, String out_loc, String username, File file, String group, String sub1) throws IOException, InterruptedException {
 
-        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
-        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "cocosynth", "image_composition.py").toAbsolutePath();
 
-        Path inputDirectory = Path.of(loc).toAbsolutePath();
-        Path outputDirectory = Path.of(output_prefix, out_loc, "output").toAbsolutePath();
+    /** Runs image composition in the ML pod using the user's dataset input directory.
+     *
+     * python3 image_composition.py \
+     *   --input_dir /data/testUser12345/datasets/input \
+     *   --output_dir /data/testUser12345/datasets/output \
+     *   --count 10 \
+     *   --width 1024 \
+     *   --height 1024 \
+     *   --silent
+     *
+     */
+    public String createDataset(String active_user, String py_script) throws IOException, InterruptedException {
 
-        Path execDir = setupMlDirectory(inputDirectory, username, file.getName(), group, sub1);
-        Files.createDirectories(outputDirectory);
+        String datasetDirectory = "/data/" + active_user + "/datasets";
 
-        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
-
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                pythonCommand,
-                scriptPath.toString(),
-                "--input_dir",
-                execDir.resolve("input").toString(),
-                "--output_dir",
-                outputDirectory.toString(),
-                "--count",
-                dataset_count,
-                "--width",
-                "1024",
-                "--height",
-                "1024",
+        List<String> command = new ArrayList<>(List.of(
+                "kubectl", "exec", "-n", namespace,
+                "deployment/" + deploymentName,
+                "--", "python3", "-u", "/opt/ml/code/cocosynth/" + py_script,
+                "--input_dir", datasetDirectory + "/input",
+                "--output_dir", datasetDirectory + "/output",
+                "--count", dataset_count,
+                "--width", "1024",
+                "--height", "1024",
                 "--silent"
-        );
-        processBuilder.redirectErrorStream(true);
+        ));
 
-        logger.info("Running image composition: {}", processBuilder.command());
+        ProcessBuilder proc = createProcess(command);
+        logger.info("Running image composition in ML pod: {}", proc.command());
 
-        Process process = processBuilder.start();
+        Process process = proc.start();
         StringBuilder output = new StringBuilder();
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 output.append(line).append(System.lineSeparator());
+                logger.info("Image composition: {}", line);
             }
         }
+
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new IOException("Image composition failed with exit code " + exitCode + ":\n" + output);
         }
-
-        return createCocoAnnotations(outputDirectory, pythonCommand, output);
-
-    }
-
-    private Path setupMlDirectory(Path inputDirectory, String username,
-                                  String file, String group, String sub1) throws IOException {
-        Path sourceFile = Path.of(inputDirectory.toString(), file);
-        Path sourceDir = Path.of(this.sourceDir.toString());
-        Path destDir = Paths.get(this.destDir.toString(), username);
-
-        Path subdirectory = destDir.resolve(ml_sub_dir).resolve(group).resolve(sub1);
-
-        // copy dummy file structure using properties file location
-        FileUtils.copyDirectory(sourceDir.toFile(), destDir.toFile());
-
-        Files.createDirectories(subdirectory);
-
-        Files.copy(sourceFile, subdirectory.resolve(
-                        sourceFile.getFileName()),
-                StandardCopyOption.REPLACE_EXISTING);
-
-        return destDir;
+        logger.info("ML pod createDataset script output: {}", output.toString().trim());
+        return output.toString().trim();
     }
 
     private boolean createCocosynthInfo(String username) {
@@ -324,31 +332,26 @@ public class ImageMaskService {
                 + System.lineSeparator() + output + annotationOutput;
     }
 
-    public String createMachineLearningModel(@NonNull Path datasetPath, String userdir) throws IOException, InterruptedException  {
-        Path venvPythonPath = Path.of("src", "main", "resources", "ml", ".venv", "bin", cmd).toAbsolutePath();
-        Path scriptPath = Path.of("src", "main", "resources", "ml", "code", "train.py").toAbsolutePath();
+    public String createMachineLearningModel(String active_user, String py_script) throws IOException, InterruptedException  {
 
-        String pythonCommand = Files.exists(venvPythonPath) ? venvPythonPath.toString() : cmd;
+        String datasetPath = "/data/" + active_user + "/datasets/output";
 
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                pythonCommand,
-                "-u",
-                scriptPath.toString(),
-                "--dataset",
-                datasetPath.toString(),
-                "--epochs",
-                String.valueOf(trainingEpochs),
-                "--batch-size",
-                String.valueOf(trainingBatchSize),
-                "--max-image-size",
-                String.valueOf(trainingMaxImageSize)
-        );
+        List<String> command = defaultCommandList(active_user, py_script);
+        command.add("--dataset");
+        command.add(datasetPath);
+        command.add("--epochs");
+        command.add(String.valueOf(trainingEpochs));
+        command.add("--batch-size");
+        command.add(String.valueOf(trainingBatchSize));
+        command.add("--max-image-size");
+        command.add(String.valueOf(trainingMaxImageSize));
 
-        processBuilder.redirectErrorStream(true);
+        ProcessBuilder proc = createProcess(command);
+        proc.redirectErrorStream(true);
 
-        logger.info("Running Machine Learning Model creation: {}", processBuilder.command());
+        logger.info("Running Machine Learning Model creation: {}", proc.command());
 
-        Process process = processBuilder.start();
+        Process process = proc.start();
         StringBuilder output = new StringBuilder();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
@@ -360,18 +363,19 @@ public class ImageMaskService {
         }
         int exitCode = process.waitFor();
 
-        if (exitCode == 0) {
-            // Store the model files in the model directory and teardown learning material
-            storeModelFiles(datasetPath, modelName, userdir);
-            storeModelFiles(datasetPath, cocoMetadataName, userdir);
-            cleanupLearningMaterial(userdir);
-        }
+//        if (exitCode == 0) {
+//            // Store the model files in the model directory and teardown learning material
+//            storeModelFiles(Path.of(datasetPath), modelName, active_user);
+//            storeModelFiles(Path.of(datasetPath), cocoMetadataName, active_user);
+//            cleanupLearningMaterial(active_user);
+//        }
 
-        if (exitCode != 0) {
-            throw new IOException("Machine Learning Model creation failed with exit code " + exitCode + ":\n" + output);
-        }
+//        if (exitCode != 0) {
+//            throw new IOException("Machine Learning Model creation failed with exit code " + exitCode + ":\n" + output);
+//        }
 
-        return "success - created machine learning model at " + datasetPath;
+        return "success - created machine learning model at " + datasetPath
+                + System.lineSeparator() + "Training output:" + System.lineSeparator() + output;
     }
 
     private void cleanupLearningMaterial(String userDir) throws IOException {
@@ -399,7 +403,8 @@ public class ImageMaskService {
         logger.info("Storing machine learning model at: {}", datasetPath);
         logger.info("Model file to store: {}", file);
 
-        Path saveTo = Path.of(modelPath.toString(), user_dir);
+//        Path saveTo = Path.of(modelPath.toString(), user_dir);
+        Path saveTo = Path.of("/data/", user_dir + "/datasets/output");
 
         Files.createDirectories(saveTo);
         Files.copy(datasetPath.resolve(file),
@@ -438,4 +443,53 @@ public class ImageMaskService {
 
     }
 
+    private List<String> defaultCommandList(String active_user, String py_script) {
+
+        return new ArrayList<>(List.of(
+                "kubectl", "--request-timeout=0", "exec", "-n", namespace,
+                "deployment/" + deploymentName,
+                "--", "python3", "-u", script_dir + py_script
+//                "--location", "/data/" + active_user
+        ));
+    }
+
+    /**
+     *
+     * @param active_user
+     * @param py_script
+     * @param category
+     * @param sub_category
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public String moveFilesForLearning(String active_user, String py_script, String category, String sub_category) throws IOException, InterruptedException {
+        List<String> command = defaultCommandList(active_user, py_script);
+        command.add("--active_user");
+        command.add(active_user);
+        command.add("--category");
+        command.add(category);
+        command.add("--sub_cat");
+        command.add(sub_category);
+
+        ProcessBuilder proc = createProcess(command);
+        logger.info("Running move files for learning: {}", proc.command());
+
+        Process process = proc.start();
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+                logger.info("Image composition: {}", line);
+            }
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Move file for learning failed with exit code " + exitCode + ":\n" + output);
+        }
+        logger.info("ML pod Move file for learning script output: {}", output.toString().trim());
+        return output.toString().trim();
+    }
 }
