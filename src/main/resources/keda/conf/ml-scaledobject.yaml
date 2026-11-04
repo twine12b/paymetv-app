@@ -14,3 +14,7 @@ spec:
       metadata:
         scalerAddress: keda-add-ons-http-external-scaler.keda:9090
         interceptorRoute: ml-trainer
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: "80"

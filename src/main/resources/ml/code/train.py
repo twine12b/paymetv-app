@@ -16,46 +16,107 @@ from PIL import Image
 import torchvision
 from torchvision.transforms import functional as F
 from torchvision.models.detection import (
-    fasterrcnn_resnet50_fpn_v2,
-    FasterRCNN_ResNet50_FPN_V2_Weights,
+    fasterrcnn_mobilenet_v3_large_320_fpn,
+    FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
 )
 
 logger = logging.getLogger(__name__)
 MAX_MEMORY_BYTES = 2 * 1024 ** 3
+MEMORY_USAGE_RATIO = 0.80
 PROCESS = psutil.Process(os.getpid())
 
 
+def _read_memory_value(path):
+    """Read a cgroup memory value, returning None when it is unavailable."""
+    try:
+        value = Path(path).read_text(encoding="ascii").strip()
+    except (OSError, UnicodeError):
+        return None
+
+    if value == "max":
+        return None
+    try:
+        value = int(value)
+    except ValueError:
+        return None
+
+    # cgroup v1 represents an unlimited limit with a very large integer.
+    return value if value > 0 and value < 1 << 60 else None
+
+
+def get_memory_limit_bytes():
+    """Return the container memory limit, falling back to system RAM."""
+    for path in (
+            "/sys/fs/cgroup/memory.max",  # cgroup v2
+            "/sys/fs/cgroup/memory/memory.limit_in_bytes",  # cgroup v1
+    ):
+        limit = _read_memory_value(path)
+        if limit is not None:
+            return limit
+    return psutil.virtual_memory().total
+
+
+def get_memory_usage_bytes():
+    """Return whole-container usage where cgroups are available."""
+    for path in (
+            "/sys/fs/cgroup/memory.current",  # cgroup v2
+            "/sys/fs/cgroup/memory/memory.usage_in_bytes",  # cgroup v1
+    ):
+        usage = _read_memory_value(path)
+        if usage is not None:
+            return usage
+    return PROCESS.memory_info().rss
+
+
+def get_memory_budget_bytes():
+    """Cap training at the lower of 2 GiB or the configured share of RAM."""
+    return min(
+        MAX_MEMORY_BYTES,
+        int(get_memory_limit_bytes() * MEMORY_USAGE_RATIO),
+    )
+
+
 def manage_memory(device, context):
-    memory_bytes = PROCESS.memory_info().rss
-    if memory_bytes <= MAX_MEMORY_BYTES:
+    memory_limit_bytes = get_memory_limit_bytes()
+    memory_budget_bytes = min(
+        MAX_MEMORY_BYTES,
+        int(memory_limit_bytes * MEMORY_USAGE_RATIO),
+    )
+    memory_bytes = get_memory_usage_bytes()
+    if memory_bytes < memory_budget_bytes:
         return
 
     logger.warning(
-        "Process memory is %.2f GiB after %s (limit %.2f GiB); "
+        "Container memory is %.2f GiB after %s (budget %.2f GiB; "
+        "container limit %.2f GiB); "
         "running garbage collection and releasing device cache",
         memory_bytes / 1024 ** 3,
         context,
-        MAX_MEMORY_BYTES / 1024 ** 3,
-    )
+        memory_budget_bytes / 1024 ** 3,
+        memory_limit_bytes / 1024 ** 3,
+        )
     collected_objects = gc.collect()
     if device.type == "cuda":
         torch.cuda.empty_cache()
     elif device.type == "mps":
         torch.mps.empty_cache()
 
-    memory_bytes = PROCESS.memory_info().rss
+    memory_bytes = get_memory_usage_bytes()
     logger.info(
         "Memory management after %s: collected %d objects; "
-        "process RSS %.2f GiB",
+        "container usage %.2f GiB of %.2f GiB",
         context,
         collected_objects,
         memory_bytes / 1024 ** 3,
-    )
-    if memory_bytes > MAX_MEMORY_BYTES:
+        memory_budget_bytes / 1024 ** 3,
+        )
+    if memory_bytes >= memory_budget_bytes:
         raise MemoryError(
-            f"Training process uses {memory_bytes / 1024 ** 3:.2f} GiB "
-            f"after memory cleanup, exceeding the "
-            f"{MAX_MEMORY_BYTES / 1024 ** 3:.0f} GiB limit"
+            f"Container memory usage is {memory_bytes / 1024 ** 3:.2f} GiB "
+            f"after cleanup, at or above the training budget of "
+            f"{memory_budget_bytes / 1024 ** 3:.2f} GiB "
+            f"({MEMORY_USAGE_RATIO:.0%} of the detected container limit, "
+            "capped at 2 GiB)"
         )
 
 # ============================================================
@@ -75,7 +136,7 @@ except RuntimeError:
 # COCO DATASET
 # ============================================================
 class CocosynthCocoDataset(Dataset):
-    def __init__(self, dataset_dir, max_image_size=640):
+    def __init__(self, dataset_dir, max_image_size=320):
         self.dataset_dir = Path(dataset_dir)
         self.max_image_size = max_image_size
 
@@ -281,7 +342,7 @@ class CocosynthCocoDataset(Dataset):
                         ymin * scale,
                         xmax * scale,
                         ymax * scale,
-                    ]
+                        ]
                 )
             boxes = resized_boxes
 
@@ -374,9 +435,9 @@ def collate_fn(batch):
 # ============================================================
 def create_model(number_of_classes):
     print()
-    print("Creating Faster R-CNN model...")
-    weights = FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
-    model = fasterrcnn_resnet50_fpn_v2(weights=weights)
+    print("Creating Faster R-CNN MobileNetV3 320 FPN model...")
+    weights = FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
+    model = fasterrcnn_mobilenet_v3_large_320_fpn(weights=weights)
     in_features = (
         model.roi_heads
         .box_predictor
@@ -396,13 +457,13 @@ def create_model(number_of_classes):
 # TRAINING
 # ============================================================
 def train_one_epoch(
-    model,
-    optimizer,
-    data_loader,
-    device,
-    epoch,
-    scaler,
-    accumulation_steps,
+        model,
+        optimizer,
+        data_loader,
+        device,
+        epoch,
+        scaler,
+        accumulation_steps,
 ):
     model.train()
     total_loss = 0.0
@@ -421,28 +482,30 @@ def train_one_epoch(
                 running_loss = progress_state["total_loss"]
 
             elapsed = time.monotonic() - epoch_started
-            memory_gib = PROCESS.memory_info().rss / 1024 ** 3
+            memory_gib = get_memory_usage_bytes() / 1024 ** 3
+            memory_budget_gib = get_memory_budget_bytes() / 1024 ** 3
             if completed_batches:
                 logger.info(
                     "Epoch %d heartbeat: %d/%d batches completed, "
-                    "average loss %.4f, memory %.2f/%.0f GiB, elapsed %.1fs",
+                    "average loss %.4f, container memory %.2f/%.2f GiB, "
+                    "elapsed %.1fs",
                     epoch,
                     completed_batches,
                     total_batches,
                     running_loss / completed_batches,
                     memory_gib,
-                    MAX_MEMORY_BYTES / 1024 ** 3,
+                    memory_budget_gib,
                     elapsed,
-                )
+                    )
             else:
                 logger.info(
                     "Epoch %d heartbeat: processing first batch; "
-                    "0/%d batches completed, memory %.2f/%.0f GiB, "
+                    "0/%d batches completed, container memory %.2f/%.2f GiB, "
                     "elapsed %.1fs",
                     epoch,
                     total_batches,
                     memory_gib,
-                    MAX_MEMORY_BYTES / 1024 ** 3,
+                    memory_budget_gib,
                     elapsed,
                 )
 
@@ -455,6 +518,7 @@ def train_one_epoch(
 
     try:
         for batch_index, (images, targets) in enumerate(data_loader):
+            manage_memory(device, f"before batch {batch_index + 1} of epoch {epoch}")
             images = [
                 image.to(device, non_blocking=False)
                 for image in images
@@ -538,7 +602,7 @@ def train_one_epoch(
         total_batches,
         total_loss / total_batches,
         time.monotonic() - epoch_started,
-    )
+        )
 
     return total_loss / len(data_loader)
 
@@ -575,7 +639,7 @@ def save_model(model, dataset, dataset_dir, output_dir, epoch):
     del cpu_state_dict
 
     metadata = {
-        "model": "Faster R-CNN ResNet50 FPN V2",
+        "model": "Faster R-CNN MobileNetV3 Large 320 FPN",
         "epoch": epoch,
         "categories": dataset.category_names,
         "category_id_to_label": dataset.category_id_to_label,
@@ -630,8 +694,8 @@ def main():
     parser.add_argument(
         "--max-image-size",
         type=int,
-        default=640,
-        help="Maximum image width/height",
+        default=320,
+        help="Maximum image width/height before model preprocessing",
     )
     parser.add_argument("--learning-rate", type=float, default=0.005)
     parser.add_argument("--model", type=str, default="fasterrcnn")
@@ -644,8 +708,8 @@ def main():
     if torch.cuda.is_available():
         device = torch.device("cuda")
     elif (
-        hasattr(torch.backends, "mps")
-        and torch.backends.mps.is_available()
+            hasattr(torch.backends, "mps")
+            and torch.backends.mps.is_available()
     ):
         device = torch.device("mps")
     else:

@@ -18,7 +18,7 @@ public interface MachineLearningActivity {
     String uploadFileBytes(String filename, byte[] fileData, String userDir);
 
     @ActivityMethod
-    Integer imageBackgroundRemover(String loc, String py_script, String filename) throws IOException, InterruptedException;
+    String imageBackgroundRemover(String loc, String py_script, String filename) throws IOException, InterruptedException;
 
     @ActivityMethod
     String createDataSet();

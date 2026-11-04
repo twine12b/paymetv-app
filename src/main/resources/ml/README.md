@@ -34,7 +34,7 @@ The PVC requests 20 GiB with `ReadWriteOnce`, which works with the local-path `s
 
 ## Install
 
-The ML startup script builds the selected image and applies the ML namespace, PVC, secret, Deployment, Service, and NetworkPolicy. KEDA and HTTP routing/scaling resources are installed separately by `../keda/keda_startup.sh`. Its `InterceptorRoute` records in-flight requests; its `ScaledObject` starts at one replica, targets two concurrent requests per replica, and caps the deployment at three. `ml_startup.sh` builds and deploys the CPU image by default. Set `ML_IMAGE_FLAVOR=cuda` to build and deploy the CUDA profile instead. `paymetv_start_all.sh` runs the KEDA startup after ML and passes its `prod`, `dev`, or `local` environment for the ingress certificate.
+The ML startup script builds the selected image and applies the ML namespace, PVC, secret, Deployment, Service, and NetworkPolicy. KEDA and HTTP routing/scaling resources are installed separately by `../keda/keda_startup.sh`, which also installs Kubernetes Metrics Server for memory-based scaling. Its `InterceptorRoute` records in-flight requests; its `ScaledObject` starts at one replica, caps the deployment at three, and scales on either HTTP concurrency or 50% memory utilization. KEDA's memory scaler measures utilization against the pod memory request (2 GiB here, so the target is 1 GiB per pod); scaling occurs when utilization is above the target. `ml_startup.sh` builds and deploys the CPU image by default. Set `ML_IMAGE_FLAVOR=cuda` to build and deploy the CUDA profile instead. `paymetv_start_all.sh` runs the KEDA startup after ML and passes its `prod`, `dev`, or `local` environment for the ingress certificate.
 
 ```sh
 ./ml_startup.sh
@@ -76,3 +76,11 @@ curl -X POST https://paymetv.co.uk/ml/scripts/image_resizer.py \
 ```
 
 The NetworkPolicy allows inbound traffic only from pods in the `keda` namespace. Egress permits cluster DNS and outbound HTTP/HTTPS for operations such as downloading model assets. The cluster CNI must enforce Kubernetes NetworkPolicy resources.
+
+
+Display POD memory usage in bytes: <PO> must be set to the pod name, e.g. `kubectl -n ml get pods`:
+
+```sh
+kubectl -n ml exec -it ${POD} -- cat /sys/fs/cgroup/memory.current \
+&& kubectl -n ml exec -it ${POD} -- cat /sys/fs/cgroup/memory.max
+```
