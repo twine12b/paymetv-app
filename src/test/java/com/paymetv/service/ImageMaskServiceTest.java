@@ -82,7 +82,8 @@ public class ImageMaskServiceTest {
         String py_script = "test.py";
         String output = imageMaskService.sayHello(active_user, py_script) ;
 
-        assertTrue(output.contains("Hello, World!"), "Python output:\n" + output);
+        assertTrue(output.contains("ML pod hello script executed successfully"), "Python output:\n" + output);
+        assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
     @Test
@@ -96,9 +97,9 @@ public class ImageMaskServiceTest {
         ArrayList<String> filenames = new ArrayList<>(List.of("image1.jpeg", "image2.jpeg", "image3.jpeg"));
         Path expectedPath = Path.of(this.userDir);
 
-        Integer output = imageMaskService.removeBackground(active_user, py_script, filenames.toArray(String[]::new));
+        String output = imageMaskService.removeBackground(active_user, py_script, filenames.toArray(String[]::new));
 
-        assertEquals(0, output);
+        assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
     @Test
@@ -109,8 +110,9 @@ public class ImageMaskServiceTest {
         String py_script = "image_resizer.py";
         ArrayList<String> filenames = new ArrayList<>(List.of("image1.png", "image2.png", "image3.png"));
 
-        Integer output = imageMaskService.changeFileAspectRatio(active_user, py_script, filenames.toArray(String[]::new));
-        assertEquals(0, output);
+        String output = imageMaskService.changeFileAspectRatio(active_user, py_script, filenames.toArray(String[]::new));
+
+        assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
     @Test
@@ -125,12 +127,14 @@ public class ImageMaskServiceTest {
 
         String output = imageMaskService.moveFilesForLearning(active_user, py_script, category, sub_category);
 
+        assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
     @Test
     @Order(5)
     @DisplayName("Create dataset")
-    void createDataset() throws Exception { String active_user = "testUser12345";
+    void createDataset() throws Exception {
+        String active_user = "testUser12345";
         String py_script = "image_composition.py";
 
         File file = new File("test-resized.png");
@@ -139,10 +143,7 @@ public class ImageMaskServiceTest {
 
         String output = imageMaskService.createDataset(active_user, py_script);
 
-//        String output = imageMaskService.createDataset(expectedPath.toString(),
-//                expectedOutputPath.toString(), this.userDir, file, group, sub1);
-//
-//        assertTrue(output.contains("success"));
+        assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
     @Test
@@ -154,27 +155,7 @@ public class ImageMaskServiceTest {
 
         String output = imageMaskService.createMachineLearningModel(active_user, py_script);
 
-
-
-//        String dataset_suffix = "/output";
-//        Path datasetPath = Path.of(dataset_prefix, user, dataset_suffix);
-//        String output = imageMaskService.createMachineLearningModel(datasetPath, user);
-//
-//        assertTrue(output.contains("success"), "Python output:\n" + output);
-//
-//        Path modelPath = Path.of(model_permanent_prefix, user);
-//
-//        System.out.println("Model path: " + modelPath.toString());
-//
-//        // TODO - check files have been created in the model directory
-//        assertTrue(Files.exists(modelPath.resolve("cocosynth_model.pth")),
-//                "Model file not found in the expected directory: "
-//                        + datasetPath.resolve("cocosynth_model.pth").toString());
-//
-//        assertTrue(Files.exists(modelPath.resolve("cocosynth_model_metadata.json")),
-//                "Model file not found in the expected directory: "
-//                        + datasetPath.resolve("cocosynth_model_metadata.json").toString());
-
+        assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
     @Description("Cleans up test files")

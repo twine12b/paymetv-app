@@ -32,6 +32,21 @@ export ISSUER_NAME
 echo -e "${YELLOW}Installing or updating KEDA and the KEDA HTTP Add-on...${NC}"
 helm repo add kedacore https://kedacore.github.io/charts --force-update
 helm repo update kedacore
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/ --force-update
+helm repo update metrics-server
+if [[ "${ENVIRONMENT}" == "local" ]]; then
+  # Local Docker Desktop/Kind kubelet certificates may not include the node IP.
+  # This skips kubelet cert verification for local development only.
+  helm upgrade --install metrics-server metrics-server/metrics-server \
+    --namespace kube-system \
+    --set-string 'args[0]=--kubelet-insecure-tls' \
+    --wait --timeout 5m
+else
+  helm upgrade --install metrics-server metrics-server/metrics-server \
+    --namespace kube-system \
+    --wait --timeout 5m
+fi
+kubectl wait --for=condition=Available apiservice/v1beta1.metrics.k8s.io --timeout=120s
 helm upgrade --install keda kedacore/keda \
   --namespace "${KEDA_NAMESPACE}" --create-namespace \
   --wait --timeout 10m

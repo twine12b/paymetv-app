@@ -102,7 +102,10 @@ public class ImageMaskService {
         }
         logger.info("ML pod hello script output: {}", output.toString().trim());
 
-        return output.toString().trim();
+        return output.toString().trim() + System.lineSeparator()
+                + "ML pod hello script executed successfully in namespace '" + namespace
+                + "' on deployment '" + deploymentName + "'"
+                + " with exitCode " + exitCode;
     }
 
     /**
@@ -111,7 +114,7 @@ public class ImageMaskService {
      *   --output-dir /data/testUser12345/output \
      *   --file image1.jpeg image2.jpeg
      */
-    public Integer removeBackground(String active_user, String py_script, String... filenames) throws IOException, InterruptedException {
+    public String removeBackground(String active_user, String py_script, String... filenames) throws IOException, InterruptedException {
         String suffix = "/output";
 
         if (filenames == null || filenames.length == 0) {
@@ -145,7 +148,9 @@ public class ImageMaskService {
         }
         logger.info("ML pod removeBackground script output: {}", output.toString().trim());
 
-        return exitCode;
+        return output.toString().trim() + System.lineSeparator() + "ML pod removeBackground script executed successfully in namespace '" + namespace
+                + "' on deployment '" + deploymentName + "'"
+                + " with exitCode " + exitCode;
     }
 
     /**
@@ -161,7 +166,7 @@ public class ImageMaskService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public Integer changeFileAspectRatio(String active_user, String py_script, String... filenames) throws IOException, InterruptedException {
+    public String changeFileAspectRatio(String active_user, String py_script, String... filenames) throws IOException, InterruptedException {
         String suffix = "/result";
 
         if (filenames == null || filenames.length == 0) {
@@ -196,7 +201,11 @@ public class ImageMaskService {
         }
         logger.info("ML pod changeFileAspectRatio script output: {}", output.toString().trim());
 
-                return exitCode;
+
+        return output.toString().trim() + System.lineSeparator()
+                + "ML pod changeFileAspectRatio script executed successfully in namespace '" + namespace
+                + "' on deployment '" + deploymentName + "'"
+                + " with exitCode " + exitCode;
     }
 
     @Description("Cleans up test files")
@@ -263,7 +272,10 @@ public class ImageMaskService {
             throw new IOException("Image composition failed with exit code " + exitCode + ":\n" + output);
         }
         logger.info("ML pod createDataset script output: {}", output.toString().trim());
-        return output.toString().trim();
+        return output.toString().trim() + System.lineSeparator()
+                + "ML pod createDataset script executed successfully in namespace '" + namespace
+                + "' on deployment '" + deploymentName + "'"
+                + " with exitCode " + exitCode;
     }
 
     private boolean createCocosynthInfo(String username) {
@@ -363,6 +375,13 @@ public class ImageMaskService {
         }
         int exitCode = process.waitFor();
 
+        log.info("Machine Learning Model creation in namespace '{}' on deployment '{}' with exit code {}:\n{}", namespace, deploymentName, exitCode, output);
+
+        if (exitCode != 0) {
+            throw new IOException("Machine Learning Model creation failed in namespace '" + namespace
+                    + "' on deployment '" + deploymentName + "' with exit code " + exitCode + ":\n" + output);
+        }
+
 //        if (exitCode == 0) {
 //            // Store the model files in the model directory and teardown learning material
 //            storeModelFiles(Path.of(datasetPath), modelName, active_user);
@@ -375,7 +394,10 @@ public class ImageMaskService {
 //        }
 
         return "success - created machine learning model at " + datasetPath
-                + System.lineSeparator() + "Training output:" + System.lineSeparator() + output;
+                + System.lineSeparator() + "Training output:" + System.lineSeparator() + output
+                + System.lineSeparator() + "ML pod createMachineLearningModel script executed successfully in namespace '" + namespace + "'"
+                + " on deployment '" + deploymentName + "'"
+                + " with exitCode " + exitCode;
     }
 
     private void cleanupLearningMaterial(String userDir) throws IOException {
@@ -487,9 +509,13 @@ public class ImageMaskService {
 
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new IOException("Move file for learning failed with exit code " + exitCode + ":\n" + output);
+            throw new IOException("Move file into learning directory failed with exit code " + exitCode + ":\n" + output);
         }
-        logger.info("ML pod Move file for learning script output: {}", output.toString().trim());
-        return output.toString().trim();
+        logger.info("ML pod Move files into learning directory script output: {}", output.toString().trim());
+
+        return output.toString().trim() + System.lineSeparator()
+                + "ML pod Move files into learning directory script executed successfully in namespace '" + namespace
+                + "' on deployment '" + deploymentName + "'"
+                + " with exitCode " + exitCode;
     }
 }

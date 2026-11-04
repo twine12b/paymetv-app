@@ -48,7 +48,7 @@ public class MachineLearningActivityImpl implements MachineLearningActivity {
     }
 
     @Override
-    public Integer imageBackgroundRemover(String loc, String py_script, String filename) throws IOException, InterruptedException {
+    public String imageBackgroundRemover(String loc, String py_script, String filename) throws IOException, InterruptedException {
         return imageMaskService.removeBackground(loc, py_script, filename);
     }
 
