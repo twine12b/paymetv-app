@@ -2,7 +2,7 @@
 
 #wget https://raw.githubusercontent.com/gurlal-1/devops-avenue/refs/heads/main/yt-videos/kind-cert-manager/script/set_cluster.sh
 
-set -e  # Exit on error
+set -eo pipefail  # Exit on errors, including failed setup pipelines
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../../../" && pwd -P)"
@@ -113,8 +113,26 @@ done
 echo -e "${GREEN}✓ Ingress-nginx controller pod is ready${NC}"
 echo ""
 
+# Create the uploads claim before scheduling the app pods.
+echo -e "${YELLOW}Setting up persistent uploads storage...${NC}"
+# Remove resources from the former in-pod PVC autoscaler, if they exist.
+kubectl -n "${namespace}" delete \
+  serviceaccount/paymetv-pvc-scaler \
+  role/paymetv-pvc-scaler \
+  rolebinding/paymetv-pvc-scaler \
+  configmap/paymetv-pvc-scaler-script \
+  --ignore-not-found
+if ! kubectl -n "${namespace}" get pvc paymetv-app-data >/dev/null 2>&1; then
+  kubectl apply -f "${SCRIPT_DIR}/paymetv-app-pvc.yaml"
+fi
+echo -e "${GREEN}✓ Uploads PVC configured${NC}"
+echo ""
+
 #Deploy the app and wait until it is ready
-envsubst < dep-before.yaml | kubectl apply -f -
+envsubst < "${SCRIPT_DIR}/dep-before.yaml" | kubectl apply -f -
+kubectl wait --namespace "${namespace}" \
+  --for=jsonpath='{.status.phase}'=Bound \
+  pvc/paymetv-app-data --timeout=300s
 echo -e  ${YELLOW}"Waiting for paymetv-app' pod to be ready...${NC}"
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
     xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True; do
@@ -157,7 +175,7 @@ echo ""
 
 #Deploy the app with secret and wait until it is ready
 echo -e "${YELLOW}Step 13: Deploying PayMeTV application (with TLS)...${NC}"
-envsubst < dep-after.yaml | kubectl apply -f -
+envsubst < "${SCRIPT_DIR}/dep-after.yaml" | kubectl apply -f -
 echo "Waiting for paymetv-app' pod to be ready..."
 until kubectl -n ${namespace} get pods --no-headers | grep paymetv-app-deployment | awk '{print $1}' | \
     xargs -I{} kubectl -n ${namespace} get pod {} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' | grep -q True; do

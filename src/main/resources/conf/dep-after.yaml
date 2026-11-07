@@ -5,7 +5,7 @@ metadata:
   labels:
     app: paymetv-app
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: paymetv-app
@@ -14,6 +14,11 @@ spec:
       labels:
         app: paymetv-app
     spec:
+      automountServiceAccountToken: false
+      volumes:
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: paymetv-app-data
       containers:
         - name: paymetv-app
           image: paymetv/paymetv-app:latest
@@ -77,6 +82,9 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/uploads
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
