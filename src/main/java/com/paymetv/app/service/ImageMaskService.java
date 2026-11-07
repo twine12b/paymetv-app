@@ -518,4 +518,102 @@ public class ImageMaskService {
                 + "' on deployment '" + deploymentName + "'"
                 + " with exitCode " + exitCode;
     }
+
+    public String moveModelAndCleanup(String activeUser, String itemId) throws IOException, InterruptedException {
+        String mlPod = getPodName("ml", "app=ml-trainer");
+        String appPod = getPodName("default", "app=paymetv-app");
+        String sourceDirectory = "/data/" + activeUser + "/datasets/output";
+        String destinationPath = "/app/uploads/" + activeUser + "/" + itemId + "/model";
+        List<String> modelFiles = List.of(
+                "coco_instances.json",
+                "cocosynth_model.pth",
+                "cocosynth_model_metadata.json",
+                "dataset_info.json",
+                "mask_definitions.json"
+        );
+        Path stagingDirectory = Files.createTempDirectory("paymetv-model-copy-");
+
+        try {
+            runKubectl(List.of("kubectl", "-n", "default", "exec", appPod, "--",
+                    "mkdir", "-p", destinationPath));
+
+            for (String fileName : modelFiles) {
+                Path localFile = stagingDirectory.resolve(fileName);
+                runKubectl(List.of("kubectl", "-n", "ml", "cp",
+                        mlPod + ":" + sourceDirectory + "/" + fileName, localFile.toString()));
+                runKubectl(List.of("kubectl", "-n", "default", "cp",
+                        localFile.toString(), appPod + ":" + destinationPath + "/" + fileName));
+            }
+            return "Copied model files from pod '" + mlPod + "' in namespace 'ml' to pod '"
+                    + appPod + "' in namespace 'default' at '" + destinationPath + "': "
+                    + String.join(", ", modelFiles);
+        } finally {
+            FileUtils.deleteDirectory(stagingDirectory.toFile());
+        }
+    }
+
+    private String runKubectl(List<String> command) throws IOException, InterruptedException {
+        Process process = createProcess(command).start();
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+            }
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("Command failed with exit code " + exitCode + ": "
+                    + String.join(" ", command) + System.lineSeparator() + output);
+        }
+        return output.toString().trim();
+    }
+
+    /**
+     * Gets the name of the pod running the ML deployment in the specified namespace.
+     * @param namespace
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public String getPodName(String namespace) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(
+                "kubectl", "-n", namespace, "describe", "deployments"
+        ).redirectErrorStream(true).start();
+
+        String output;
+        try (var reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()))) {
+            output = reader.lines()
+                    .filter(line -> line.contains("NewReplicaSet:"))
+                    .map(line -> line.replaceFirst(
+                            "^.*NewReplicaSet:\\s*([^\\s]+).*$", "$1"))
+                    .findFirst()
+                    .orElse("");
+        }
+
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("kubectl failed with exit code " + exitCode + ": " + output);
+        }
+        if (output.isEmpty()) {
+            throw new IOException("Could not find a NewReplicaSet name in kubectl output");
+        }
+
+        logger.info("Found NewReplicaSet name: {}", output);
+
+        return output;
+    }
+
+    private String getPodName(String namespace, String labelSelector) throws IOException, InterruptedException {
+        String output = runKubectl(List.of("kubectl", "-n", namespace, "get", "pods",
+                "-l", labelSelector, "--field-selector=status.phase=Running",
+                "-o", "jsonpath={.items[0].metadata.name}"));
+        if (output.isBlank()) {
+            throw new IOException("No running pod found in namespace '" + namespace
+                    + "' with label selector '" + labelSelector + "'");
+        }
+        return output;
+    }
 }
