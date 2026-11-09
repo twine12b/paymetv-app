@@ -155,54 +155,59 @@ public class ImageMaskServiceTest {
         assertTrue(output.contains("exitCode 0"), "Python output:\n" + output);
     }
 
-    @Test
-    @Order(7)
-    @DisplayName("Given a NAMESPACE get the pod name")
-    void getPodName() throws Exception, InterruptedException {
-        String namespace1 = "default";
-        String namespace2 = "database";
-        String namespace3 = "kafka";
-        String namespace4 = "keda";
-        String namespace5 = "ml";
-        String namespace6 = "monitoring";
-        String namespace7 = "streaming";
-        String namespace8 = "workflow";
-        String result = "";
-
-        result = imageMaskService.getPodName(namespace1);
-        System.out.println("Pod name for namespace 'default': " + result);
-        assertTrue(result.contains("paymetv-app-deployment"),
-                "Pod name for namespace 'default' should contain 'paymetv-app-deployment'");
-
-        result = imageMaskService.getPodName(namespace2);
-        System.out.println("Pod name for namespace 'default': " + result);
-        assertTrue(result.contains("mysql-deployment"),
-                "Pod name for namespace 'database' should contain 'mysql-deployment'");
-
-//        assertTrue(imageMaskService.getPodName(namespace3).contains("kafka-broker")
-//                        || imageMaskService.getPodName(namespace3).contains("zookeeper"),
-//                "Pod name for namespace 'kafka' should contain 'kafka' or 'zookeeper'");
+    /**
+     * This test has been moved to a different class
+     * @throws Exception
+     * @throws InterruptedException
+     */
+//    @Test
+//    @Order(7)
+//    @DisplayName("Given a NAMESPACE get the pod name")
+//    void getPodName() throws Exception, InterruptedException {
+//        String namespace1 = "default";
+//        String namespace2 = "database";
+//        String namespace3 = "kafka";
+//        String namespace4 = "keda";
+//        String namespace5 = "ml";
+//        String namespace6 = "monitoring";
+//        String namespace7 = "streaming";
+//        String namespace8 = "workflow";
+//        String result = "";
 //
-//        assertTrue(imageMaskService.getPodName(namespace4).contains("keda-operator"),
-//                "Pod name for namespace 'keda' should contain 'keda-operator'");
-
-        result = imageMaskService.getPodName(namespace5);
-        System.out.println("Pod name for namespace 'default': " + result);
-        assertTrue(result.contains("ml-trainer"),
-                "Pod name for namespace 'ml' should contain 'ml-trainer'");
-
-//        assertTrue(imageMaskService.getPodName(namespace6).contains("prometheus"),
-//                "Pod name for namespace 'monitoring' should contain 'prometheus'");
-
-        result = imageMaskService.getPodName(namespace7);
-        System.out.println("Pod name for namespace 'default': " + result);
-        assertTrue(result.contains("lighttpd"),
-                "Pod name for namespace 'streaming' should contain 'lighttpd'");
-
-//        assertTrue(imageMaskService.getPodName(namespace8).contains("postgres"),
-//                "Pod name for namespace 'workflow' should contain 'postgres'");
-
-    }
+//        result = imageMaskService.getPodName(namespace1);
+//        System.out.println("Pod name for namespace 'default': " + result);
+//        assertTrue(result.contains("paymetv-app-deployment"),
+//                "Pod name for namespace 'default' should contain 'paymetv-app-deployment'");
+//
+//        result = imageMaskService.getPodName(namespace2);
+//        System.out.println("Pod name for namespace 'default': " + result);
+//        assertTrue(result.contains("mysql-deployment"),
+//                "Pod name for namespace 'database' should contain 'mysql-deployment'");
+//
+////        assertTrue(imageMaskService.getPodName(namespace3).contains("kafka-broker")
+////                        || imageMaskService.getPodName(namespace3).contains("zookeeper"),
+////                "Pod name for namespace 'kafka' should contain 'kafka' or 'zookeeper'");
+////
+////        assertTrue(imageMaskService.getPodName(namespace4).contains("keda-operator"),
+////                "Pod name for namespace 'keda' should contain 'keda-operator'");
+//
+//        result = imageMaskService.getPodName(namespace5);
+//        System.out.println("Pod name for namespace 'default': " + result);
+//        assertTrue(result.contains("ml-trainer"),
+//                "Pod name for namespace 'ml' should contain 'ml-trainer'");
+//
+////        assertTrue(imageMaskService.getPodName(namespace6).contains("prometheus"),
+////                "Pod name for namespace 'monitoring' should contain 'prometheus'");
+//
+//        result = imageMaskService.getPodName(namespace7);
+//        System.out.println("Pod name for namespace 'default': " + result);
+//        assertTrue(result.contains("lighttpd"),
+//                "Pod name for namespace 'streaming' should contain 'lighttpd'");
+//
+////        assertTrue(imageMaskService.getPodName(namespace8).contains("postgres"),
+////                "Pod name for namespace 'workflow' should contain 'postgres'");
+//
+//    }
 
     @Test
     @Order(8)
