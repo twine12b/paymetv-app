@@ -1,14 +1,27 @@
 package com.paymetv.app.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
+@Component
 public class KubeHelper {
+
+    @Value("${ml_namespace:ml}")
+    private String namespace;
+
+    @Value("${ml_deployment_name:ml-trainer}")
+    private String deploymentName;
+
+    @Value("${ml_script_dir}")
+    private String script_dir;
 
     public ProcessBuilder createProcess(List<String> command) {
 
@@ -35,39 +48,23 @@ public class KubeHelper {
         return output.toString().trim();
     }
 
-    /**
-     * Gets the name of the pod running the ML deployment in the specified namespace.
-     * @param namespace
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public String getPodName(String namespace) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(
-                "kubectl", "-n", namespace, "describe", "deployments"
-        ).redirectErrorStream(true).start();
-
-        String output;
-        try (var reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(process.getInputStream()))) {
-            output = reader.lines()
-                    .filter(line -> line.contains("NewReplicaSet:"))
-                    .map(line -> line.replaceFirst(
-                            "^.*NewReplicaSet:\\s*([^\\s]+).*$", "$1"))
-                    .findFirst()
-                    .orElse("");
+    public String getPodName(String namespace, String labelSelector) throws IOException, InterruptedException {
+        String output = runKubectl(List.of("kubectl", "-n", namespace, "get", "pods",
+                "-l", labelSelector, "--field-selector=status.phase=Running",
+                "-o", "jsonpath={.items[0].metadata.name}"));
+        if (output.isBlank()) {
+            throw new IOException("No running pod found in namespace '" + namespace
+                    + "' with label selector '" + labelSelector + "'");
         }
-
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new IOException("kubectl failed with exit code " + exitCode + ": " + output);
-        }
-        if (output.isEmpty()) {
-            throw new IOException("Could not find a NewReplicaSet name in kubectl output");
-        }
-
-        log.info("Found NewReplicaSet name: {}", output);
-
         return output;
+    }
+
+    public List<String> defaultCommandList(String active_user, String py_script) {
+
+        return new ArrayList<>(List.of(
+                "kubectl", "--request-timeout=0", "exec", "-n", namespace,
+                "deployment/" + deploymentName,
+                "--", "python3", "-u", script_dir + py_script
+        ));
     }
 }

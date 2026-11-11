@@ -19,9 +19,6 @@ public class ImageMaskService {
     @Value("${file.upload-dir}")
     private String fs_dir;
 
-    @Value("${ml_script_dir}")
-    private String script_dir;
-
     @Value("${ml_dir}")
     private String output_prefix;
 
@@ -66,11 +63,16 @@ public class ImageMaskService {
 
     private final String cmd = setPythonCmd();
 
-    private KubeHelper kubeHelper = new KubeHelper();
+    private final KubeHelper kubeHelper;
+
+    // Helper injection, prevts NullPointerException when calling defaultCommandList() in tests
+    public ImageMaskService(KubeHelper kubeHelper) {
+        this.kubeHelper = kubeHelper;
+    }
 
     public String sayHello(String active_user, String py_script) throws IOException, InterruptedException {
 
-        List<String> command = defaultCommandList(active_user, py_script);
+        List<String> command = kubeHelper.defaultCommandList(active_user, py_script);
         ProcessBuilder proc = kubeHelper.createProcess(command);
 
         Process process = proc.start();
@@ -109,7 +111,7 @@ public class ImageMaskService {
             throw new IllegalArgumentException("At least one input filename is required");
         }
 
-        List<String> command = defaultCommandList(active_user, py_script);
+        List<String> command = kubeHelper.defaultCommandList(active_user, py_script);
         command.add("--output-dir");
         command.add(fs_dir + active_user + suffix);
         command.add("--location");
@@ -161,7 +163,7 @@ public class ImageMaskService {
             throw new IllegalArgumentException("At least one input filename is required");
         }
 
-        List<String> command = defaultCommandList(active_user, py_script);
+        List<String> command = kubeHelper.defaultCommandList(active_user, py_script);
 
         command.add("--location");
         command.add(fs_dir + active_user + "/output");
@@ -251,7 +253,7 @@ public class ImageMaskService {
 
         String datasetPath = "/data/" + active_user + "/datasets/output";
 
-        List<String> command = defaultCommandList(active_user, py_script);
+        List<String> command = kubeHelper.defaultCommandList(active_user, py_script);
         command.add("--dataset");
         command.add(datasetPath);
         command.add("--epochs");
@@ -292,41 +294,6 @@ public class ImageMaskService {
                 + " with exitCode " + exitCode;
     }
 
-    private void cleanupLearningMaterial(String userDir) throws IOException {
-        if (Files.exists(Path.of(destDir.toString(), userDir))) {
-            try (var paths = Files.walk(Path.of(destDir.toString(), userDir))) {
-                paths.sorted(Comparator.reverseOrder()).forEach(path -> {
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
-            }
-        }
-    }
-
-    /**
-     * Stores the machine learning model files in the permanent local storage directory.
-     * @param datasetPath
-     * @param file
-     * @param user_dir
-     * @throws IOException
-     */
-    public void storeModelFiles(Path datasetPath, String file, String user_dir) throws IOException {
-        log.info("Storing machine learning model at: {}", datasetPath);
-        log.info("Model file to store: {}", file);
-
-        Path saveTo = Path.of("/data/", user_dir + "/datasets/output");
-
-        Files.createDirectories(saveTo);
-        Files.copy(datasetPath.resolve(file),
-                saveTo.resolve(file),
-               StandardCopyOption.REPLACE_EXISTING);
-
-        log.info("Model file stored: {}", datasetPath.toString() + "/" + file);
-    }
-
     private String setPythonCmd() {
         String os = System.getProperty("os.name").toLowerCase();
 
@@ -345,15 +312,6 @@ public class ImageMaskService {
         return null;
     }
 
-    private List<String> defaultCommandList(String active_user, String py_script) {
-
-        return new ArrayList<>(List.of(
-                "kubectl", "--request-timeout=0", "exec", "-n", namespace,
-                "deployment/" + deploymentName,
-                "--", "python3", "-u", script_dir + py_script
-        ));
-    }
-
     /**
      *
      * @param active_user
@@ -365,7 +323,7 @@ public class ImageMaskService {
      * @throws InterruptedException
      */
     public String moveFilesForLearning(String active_user, String py_script, String category, String sub_category) throws IOException, InterruptedException {
-        List<String> command = defaultCommandList(active_user, py_script);
+        List<String> command = kubeHelper.defaultCommandList(active_user, py_script);
         command.add("--active_user");
         command.add(active_user);
         command.add("--category");
@@ -399,8 +357,8 @@ public class ImageMaskService {
     }
 
     public String moveModelAndCleanup(String activeUser, String itemId) throws IOException, InterruptedException {
-        String mlPod = getPodName("ml", "app=ml-trainer");
-        String appPod = getPodName("default", "app=paymetv-app");
+        String mlPod = kubeHelper.getPodName("ml", "app=ml-trainer");
+        String appPod = kubeHelper.getPodName("default", "app=paymetv-app");
         String sourceDirectory = "/data/" + activeUser + "/datasets/output";
         String destinationPath = "/app/uploads/" + activeUser + "/" + itemId + "/model";
         List<String> modelFiles = List.of(
@@ -429,16 +387,5 @@ public class ImageMaskService {
         } finally {
             FileUtils.deleteDirectory(stagingDirectory.toFile());
         }
-    }
-
-    private String getPodName(String namespace, String labelSelector) throws IOException, InterruptedException {
-        String output = kubeHelper.runKubectl(List.of("kubectl", "-n", namespace, "get", "pods",
-                "-l", labelSelector, "--field-selector=status.phase=Running",
-                "-o", "jsonpath={.items[0].metadata.name}"));
-        if (output.isBlank()) {
-            throw new IOException("No running pod found in namespace '" + namespace
-                    + "' with label selector '" + labelSelector + "'");
-        }
-        return output;
     }
 }
