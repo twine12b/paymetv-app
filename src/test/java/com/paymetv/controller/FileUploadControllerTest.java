@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Uses MockMvc for testing REST endpoints and mocks KafkaTemplate
  * to avoid requiring a real Kafka broker during tests.
  */
-@SpringBootTest(classes = AppApplication.class)
+@SpringBootTest(classes = AppApplication.class, properties = "file.upload-dir=uploads")
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Tag("FileUploadControllerTest")
