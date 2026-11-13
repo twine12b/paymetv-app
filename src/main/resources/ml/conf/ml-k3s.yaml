@@ -1,0 +1,232 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ml
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-data
+  namespace: ml
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-trainer
+  namespace: ml
+  labels:
+    app: ml-trainer
+spec:
+  type: ClusterIP
+  selector:
+    app: ml-trainer
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+---
+# In-cluster callers use this endpoint so their requests pass through the
+# KEDA HTTP interceptor and contribute to the scaling metric.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-trainer-proxy
+  namespace: ml
+spec:
+  type: ExternalName
+  externalName: keda-add-ons-http-interceptor-proxy.keda.svc.cluster.local
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ml-trainer-network-policy
+  namespace: ml
+spec:
+  podSelector:
+    matchLabels:
+      app: ml-trainer
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keda
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+---
+# Apply instead of deployment.yaml when the cluster has NVIDIA GPU nodes and
+# the NVIDIA device plugin/runtime installed. Uses the same Deployment name.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-trainer
+  namespace: ml
+  labels:
+    app: ml-trainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-trainer
+  template:
+    metadata:
+      labels:
+        app: ml-trainer
+    spec:
+      terminationGracePeriodSeconds: 3600
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: ml-trainer
+          image: ${CUDA_IMAGE}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ML_DATASETS_DIR
+              value: /data/datasets
+            - name: ML_MODELS_DIR
+              value: /data/models
+            - name: TRAINING_CONCURRENCY
+              value: "1"
+            - name: ML_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ml-api-auth
+                  key: token
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: 1
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+          volumeMounts:
+            - name: ml-data
+              mountPath: /data
+      volumes:
+        - name: ml-data
+          persistentVolumeClaim:
+            claimName: ml-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-trainer
+  namespace: ml
+  labels:
+    app: ml-trainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-trainer
+  template:
+    metadata:
+      labels:
+        app: ml-trainer
+    spec:
+      terminationGracePeriodSeconds: 3600
+      containers:
+        - name: ml-trainer
+          image: ${IMAGE}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ML_DATASETS_DIR
+              value: /data/datasets
+            - name: ML_MODELS_DIR
+              value: /data/models
+            - name: TRAINING_CONCURRENCY
+              value: "1"
+            - name: ML_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ml-api-auth
+                  key: token
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+          volumeMounts:
+            - name: ml-data
+              mountPath: /data
+      volumes:
+        - name: ml-data
+          persistentVolumeClaim:
+            claimName: ml-data

@@ -96,6 +96,15 @@ for namespace in "${all_namespaces[@]}"; do
     kubectl -n "$namespace" patch "$scaled_object" --type=merge \
       -p '{"metadata":{"finalizers":[]}}' >/dev/null 2>&1 || true
   done
+
+  # InterceptorRoutes can also outlive the HTTP add-on during teardown. Clear
+  # their finalizers after the operator has been removed so namespaces such as
+  # streaming are not left stuck in Terminating.
+  interceptor_routes=$(kubectl -n "$namespace" get interceptorroutes.http.keda.sh -o name 2>/dev/null || true)
+  for interceptor_route in $interceptor_routes; do
+    kubectl -n "$namespace" patch "$interceptor_route" --type=merge \
+      -p '{"metadata":{"finalizers":[]}}' >/dev/null 2>&1 || true
+  done
 done
 
 if command -v helm >/dev/null 2>&1; then
