@@ -1,0 +1,102 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ml-trainer-ingress-cert
+  namespace: keda
+spec:
+  dnsNames:
+    - paymetv.co.uk
+  secretName: ml-trainer-ingress-tls
+  issuerRef:
+    name: ${ISSUER_NAME}
+    kind: ClusterIssuer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ml-trainer
+  namespace: keda
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: ml-trainer-ingress-tls
+      hosts:
+        - paymetv.co.uk
+  rules:
+    - host: paymetv.co.uk
+      http:
+        paths:
+          - path: /ml(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: keda-add-ons-http-interceptor-proxy
+                port:
+                  number: 8080
+---
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: ml-trainer
+  namespace: ml
+spec:
+  target:
+    service: ml-trainer
+    port: 8080
+  rules:
+    - hosts:
+        - paymetv.co.uk
+        - ml-trainer-proxy
+        - ml-trainer-proxy.ml.svc.cluster.local
+  scalingMetric:
+    concurrency:
+      targetValue: 2
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ml-trainer
+  namespace: ml
+spec:
+  scaleTargetRef:
+    name: ml-trainer
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  cooldownPeriod: 180
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: ml-trainer
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: "80"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: lighttpd
+  namespace: streaming
+spec:
+  scaleTargetRef:
+    name: lighttpd
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  cooldownPeriod: 300
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: lighttpd
+        metricName: requests
+        metricType: AverageValue
+        threshold: "3"
+        activationThreshold: "1"
+        activationMetricType: AverageValue

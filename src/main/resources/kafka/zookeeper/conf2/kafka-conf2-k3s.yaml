@@ -1,0 +1,242 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-1
+  namespace: kafka
+  labels:
+    app: zookeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.3.2
+          ports:
+            - containerPort: 2181
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+            - name: ZOOKEEPER_SERVER_ID
+              value: "1"
+            - name: ZOOKEEPER_SERVERS
+              value: "zookeeper-1:2888:3888"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-1
+  namespace: kafka
+spec:
+  ports:
+    - port: 2181
+      targetPort: 2181
+  selector:
+    app: zookeeper
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-broker-1
+  namespace: kafka
+  labels:
+    app: kafka-broker-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-broker-1
+  template:
+    metadata:
+      labels:
+        app: kafka-broker-1
+    spec:
+      hostname: kafka-broker-1
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.3.2
+          ports:
+            - containerPort: 9092
+            - containerPort: 29092
+          env:
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper-1:2181"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka-broker-1:29092,PLAINTEXT_HOST://127.0.0.1:9092"
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-broker-1
+  namespace: kafka
+  labels:
+    app: kafka-broker-1
+spec:
+  type: LoadBalancer
+  ports:
+    - name: external
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
+    - name: internal
+      port: 29092
+      targetPort: 29092
+      protocol: TCP
+  selector:
+    app: kafka-broker-1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-broker-2
+  namespace: kafka
+  labels:
+    app: kafka-broker-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-broker-2
+  template:
+    metadata:
+      labels:
+        app: kafka-broker-2
+    spec:
+      hostname: kafka-broker-2
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.3.2
+          ports:
+            - containerPort: 9093
+            - containerPort: 29093
+          env:
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper-1:2181"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9093"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka-broker-2:29093,PLAINTEXT_HOST://127.0.0.1:9093"
+            - name: KAFKA_BROKER_ID
+              value: "2"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-broker-2
+  namespace: kafka
+spec:
+  ports:
+    - name: external
+      port: 9093
+      targetPort: 9093
+    - name: internal
+      port: 29093
+      targetPort: 29093
+  selector:
+    app: kafka-broker-2
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-monitoring-ui
+  namespace: kafka
+  labels:
+    app: kafka-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+        - name: kafka-ui
+          image: provectuslabs/kafka-ui:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_CLUSTERS_0_NAME
+              value: "local"
+            - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+              value: "kafka-broker-1:29092,kafka-broker-2:29093,kafka-broker-3:29094"
+            - name: KAFKA_CLUSTERS_0_ZOOKEEPER
+              value: "zookeeper-1:2181"
+            - name: AUTH_TYPE
+              value: "LOGIN_FORM"
+            - name: SPRING_SECURITY_USER_NAME
+              value: "kafka_user"
+            - name: SPRING_SECURITY_USER_PASSWORD
+              value: "kafka_password"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: kafka
+spec:
+  ports:
+    - port: 8082
+      targetPort: 8080
+  selector:
+    app: kafka-ui
+  type: LoadBalancer
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-kafka
+  namespace: kafka
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-kafka
+          image: confluentinc/cp-kafka:7.3.2
+          command:
+            - /bin/sh
+            - -c
+            - |
+              kafka-topics --bootstrap-server kafka-broker-1:29092 --list && \
+              kafka-topics --bootstrap-server kafka-broker-1:29092 --create --if-not-exists --topic test-event --replication-factor 3 --partitions 3 && \
+              kafka-topics --bootstrap-server kafka-broker-1:29092 --list
+      restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: testclient
+  namespace: kafka
+spec:
+  containers:
+  - name: kafka
+    image: solsson/kafka:0.11.0.0
+    command:
+      - sh
+      - -c
+      - "exec tail -f /dev/null"

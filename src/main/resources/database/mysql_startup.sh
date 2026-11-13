@@ -3,6 +3,8 @@
 set -e  # Exit on error
 
 NAMESPACE="database"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+PORT_FORWARD_PID_FILE="${SCRIPT_DIR}/.portforward.pid"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -15,20 +17,7 @@ echo -e "${BLUE}PayMeTV Kubernetes Setup Script${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
 
-# Cleanup: Stop existing port-forward process - TODO move to common script keep (DRY)
-echo -e "${YELLOW}Cleanup: Stopping existing port-forward process...${NC}"
-if [ -f ".portforward.pid" ]; then
-  PID=$(cat .portforward.pid 2>/dev/null || true)
-  if [ -n "$PID" ] && ps -p $PID > /dev/null 2>&1; then
-    kill $PID 2>/dev/null || true
-    echo -e "${GREEN}✓ Stopped port-forward process (PID: $PID)${NC}"
-  else
-    echo -e "${YELLOW}  No running port-forward process found${NC}"
-  fi
-  rm -f .portforward.pid 2>/dev/null || true
-else
-  echo -e "${YELLOW}  No previous port-forward PID file found${NC}"
-fi
+bash "${SCRIPT_DIR}/../port_forward.sh" stop "${PORT_FORWARD_PID_FILE}" "database port-forward"
 echo ""
 
 # teardown the database namespace and its resources only when the namespace exists
@@ -91,9 +80,8 @@ echo ""
 
 # Port forward to the database - this is only required for local development
 echo -e "${YELLOW}Step 5: Port-forwarding to the database...${NC}"
-kubectl port-forward -n database svc/mysql :3306 > /dev/null 2>&1 &
-PORT_FORWARD_PID=$!
-echo $PORT_FORWARD_PID > .portforward.pid
+bash "${SCRIPT_DIR}/../port_forward.sh" start database svc/mysql :3306 \
+  "${PORT_FORWARD_PID_FILE}" database
 echo -e "${GREEN}✓ Database port-forwarded${NC}"
 echo ""
 
