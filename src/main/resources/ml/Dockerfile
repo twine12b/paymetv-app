@@ -36,21 +36,26 @@ CMD ["sh", "-c", "mkdir -p /data/testUser12345 \
 
 FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04 AS cuda
 WORKDIR /opt/ml
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DATA_DIR=/data \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-pip python3-venv \
+    && python3 -m venv "$VIRTUAL_ENV" \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements2.txt ./
-RUN pip3 install --no-cache-dir -r requirements2.txt
+RUN python -m pip install --no-cache-dir -r requirements2.txt
 COPY service.py ./service.py
 COPY code/ ./code/
 COPY default_ml_structure /opt/ml/default_ml_structure
 
 COPY image1.jpeg /opt/ml/image1.jpeg
+COPY image1.jpeg /opt/ml/image2.jpeg
+COPY image1.jpeg /opt/ml/image3.jpeg
 
 EXPOSE 8080
 CMD ["sh", "-c", "mkdir -p /data/testUser12345 \

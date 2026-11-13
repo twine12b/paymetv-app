@@ -36,7 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = AppApplication.class)
+@SpringBootTest(classes = AppApplication.class, properties = "file.upload-dir=uploads")
 class MachineLearningWorkflowTest {
 
     private String userDir;

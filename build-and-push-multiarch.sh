@@ -18,7 +18,6 @@ IMAGE_NAME="paymetv/paymetv-app"
 IMAGE_TAG="latest"
 PLATFORMS="linux/amd64,linux/arm64"
 DOCKER_USERNAME="paymetv"
-DOCKER_PASSWORD="Ch1ldren1553"
 
 # set the frontend directory
 frontend_dir="src/main/resources/frontend"
@@ -31,6 +30,8 @@ if [ -z "$ROOT_DIR" ]; then
   exit 1
 fi
 
+cd "${ROOT_DIR}"
+
 echo -e "${YELLOW}Step 1: Building frontend...${NC}"
 pushd $frontend_dir > /dev/null
 npm install --force
@@ -41,7 +42,12 @@ echo ""
 
 echo -e "${YELLOW}Step 2: Building backend with Maven...${NC}"
 [ -d target ] && rm -r ./target/
-mvn clean package
+mvn clean package -DskipTests
+APP_JAR="${ROOT_DIR}/target/paymetv-app-0.0.1-SNAPSHOT.jar"
+if [ ! -f "${APP_JAR}" ]; then
+  echo -e "${RED}Error: Maven did not create ${APP_JAR}${NC}" >&2
+  exit 1
+fi
 echo -e "${GREEN}✓ Backend built successfully${NC}"
 echo ""
 
@@ -60,71 +66,105 @@ docker buildx inspect --bootstrap
 echo -e "${GREEN}✓ Docker buildx configured${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 4: Building multi-architecture image locally (OCI tarball)...${NC}"
-echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
-echo "Platforms: ${PLATFORMS}"
-echo ""
+echo -e "${YELLOW}Step 4: Logging in to Docker Hub...${NC}"
+docker login -u "${DOCKER_USERNAME}"
 
-# Export the multi-arch image to a local OCI tarball — no registry push.
-# type=oci writes the same manifest structure that gets pushed to a registry,
-# so sha256(index.json) == the manifest-list digest Docker Hub will report.
-LOCAL_OCI_TAR="/tmp/paymetv-app-local.tar"
+build_and_push_image() {
+  local image_name="$1"
+  local image_tag="$2"
+  local platforms="$3"
+  local context="$4"
+  local dockerfile="$5"
+  local target="$6"
+  shift 6
+  local input_paths=("$@")
+  local context_dir
+  context_dir="$(cd "${context}" && pwd -P)"
+  local image="${image_name}:${image_tag}"
+  local first_platform="${platforms%%,*}"
+  local checksum_input
+  local checksum
+  local remote_checksum=""
+  local build_args=(--platform "${platforms}" --tag "${image}" --file "${context_dir}/${dockerfile}")
 
-docker buildx build \
-  --platform "${PLATFORMS}" \
-  --tag "${IMAGE_NAME}:${IMAGE_TAG}" \
-  --output "type=oci,dest=${LOCAL_OCI_TAR},oci-mediatypes=true" \
-  .
+  # Hash only files that can affect this image. Hashing these inputs before
+  # Buildx runs avoids rebuilding unchanged images; a label on the pushed image
+  # lets later runs compare against the checksum stored in the registry.
+  checksum_input="$(
+    cd "${context_dir}"
+    for path in "${input_paths[@]}"; do
+      if [ -d "${path}" ]; then
+        find "${path}" \
+          \( -name .venv -o -name __pycache__ -o -name .idea \
+             -o -name image_in -o -name image_out \
+             -o -path "${path}/code/cocosynth/datasets" \
+             -path "${path}/code/cocosynth/models*" \) -prune -o \
+          \( -name '*.pyc' -o -name '*.pyo' -o -name .DS_Store \) -prune -o \
+          -type f -print0
+      elif [ -f "${path}" ]; then
+        printf '%s\0' "${path}"
+      else
+        echo "Missing build input: ${context}/${path}" >&2
+        exit 1
+      fi
+    done | sort -z | while IFS= read -r -d '' path; do
+      shasum -a 256 "${path}"
+    done | shasum -a 256 | awk '{print $1}'
+  )"
+  checksum="${checksum_input}"
 
-# Compute the manifest-list digest from the OCI tarball's index.json.
-LOCAL_DIGEST="sha256:$(tar -xOf "${LOCAL_OCI_TAR}" index.json | sha256sum | awk '{print $1}')"
+  echo -e "${YELLOW}Checking ${image} build-input checksum...${NC}"
+  if docker pull --platform "${first_platform}" "${image}" >/dev/null 2>&1; then
+    remote_checksum="$(docker image inspect --format '{{ index .Config.Labels "com.paymetv.build-input-sha256" }}' "${image}" 2>/dev/null || true)"
+  fi
 
-echo -e "${GREEN}✓ Multi-architecture image built locally (OCI tarball)${NC}"
-echo ""
+  if [ "${checksum}" = "${remote_checksum}" ]; then
+    echo -e "${GREEN}✓ ${image} already exists with matching checksum; skipping build and push${NC}"
+    echo ""
+    return
+  fi
 
-###############################################
-# SHA COMPARISON + CONDITIONAL PUSH
-###############################################
+  echo "Build-input checksum: ${checksum}"
+  echo "Registry checksum:    ${remote_checksum:-none}"
+  build_args+=(--label "com.paymetv.build-input-sha256=${checksum}")
 
-echo -e "${YELLOW}Step 5: Comparing local image digest with Docker Hub...${NC}"
-# Use --password-stdin to avoid exposing credentials in the process list.
-echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin > /dev/null
+  if [ -n "${target}" ]; then
+    build_args+=(--target "${target}")
+  fi
 
-# Get the top-level manifest-list digest currently on Docker Hub.
-# grep "^Digest:" matches only the unindented top-level line, not the
-# per-platform "Digest:" lines that appear inside the Manifests block.
-REMOTE_DIGEST=$(docker buildx imagetools inspect "${IMAGE_NAME}:${IMAGE_TAG}" \
-  2>/dev/null | grep "^Digest:" | awk '{print $2}' || echo "none")
+  echo -e "${YELLOW}Building ${image} for ${platforms}...${NC}"
+  docker buildx build "${build_args[@]}" --push "${context_dir}"
+  echo -e "${GREEN}✓ Built and pushed ${image}${NC}"
+  echo ""
+}
 
-echo "Local digest:  ${LOCAL_DIGEST}"
-echo "Remote digest: ${REMOTE_DIGEST}"
-echo ""
-
-if [ "${LOCAL_DIGEST}" != "${REMOTE_DIGEST}" ]; then
-  echo -e "${YELLOW}⚠️  Digests differ — pushing updated image to Docker Hub...${NC}"
-
-  docker buildx build \
-    --platform "${PLATFORMS}" \
-    --tag "${IMAGE_NAME}:${IMAGE_TAG}" \
-    --push \
-    .
-
-  echo -e "${GREEN}✓ Image pushed to Docker Hub as ${IMAGE_NAME}:${IMAGE_TAG}${NC}"
-else
-  echo -e "${GREEN}✓ Local and remote digests match — no push required.${NC}"
-fi
-
-###############################################
+echo -e "${YELLOW}Step 5: Building and publishing all deployed PayMeTV images...${NC}"
+build_and_push_image "paymetv/paymetv-app" "${IMAGE_TAG}" "${PLATFORMS}" "." "Dockerfile" "" \
+  "Dockerfile" "pom.xml" "mvnw" "src"
+build_and_push_image "paymetv/streaming-app" "latest" "${PLATFORMS}" \
+  "src/main/resources/streaming" "Dockerfile" "" \
+  "Dockerfile" "conf/lighttpd.conf" "html"
+build_and_push_image "paymetv/paymetv_db" "latest" "${PLATFORMS}" \
+  "src/main/resources/database" "Dockerfile" "" \
+  "Dockerfile" "dumps/database.sql" "initialise_db.sql"
+build_and_push_image "paymetv/ml-trainer" "cpu-latest" "${PLATFORMS}" \
+  "src/main/resources/ml" "Dockerfile" "cpu" \
+  "Dockerfile" "requirements1.txt" "service.py" "code" "default_ml_structure" "image1.jpeg"
+# NVIDIA CUDA images are currently AMD64-only; publish that flavor for GPU clusters.
+build_and_push_image "paymetv/ml-trainer" "cuda-latest" "linux/amd64" \
+  "src/main/resources/ml" "Dockerfile" "cuda" \
+  "Dockerfile" "requirements2.txt" "service.py" "code" "default_ml_structure" "image1.jpeg"
 
 echo ""
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${GREEN}Build Complete!${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo ""
-echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
-echo "Platforms: ${PLATFORMS}"
-echo ""
-echo -e "${YELLOW}Verifying image manifest...${NC}"
-docker buildx imagetools inspect "${IMAGE_NAME}:${IMAGE_TAG}"
+echo "Published images:"
+echo "  paymetv/paymetv-app:${IMAGE_TAG} (${PLATFORMS})"
+echo "  paymetv/streaming-app:latest (${PLATFORMS})"
+echo "  paymetv/paymetv_db:latest (${PLATFORMS})"
+echo "  paymetv/ml-trainer:cpu-latest (${PLATFORMS})"
+echo "  paymetv/ml-trainer:cuda-latest (linux/amd64 only)"
 echo ""
 echo -e "${GREEN}You can now deploy this image to your Kubernetes cluster!${NC}"
