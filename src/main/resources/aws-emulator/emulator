@@ -1,0 +1,16 @@
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
+ADD https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/latest/aws-emulator-x86_64.rpm /tmp/aws-emulator.rpm
+RUN dnf install -y glibc \
+    && rpm -i /tmp/aws-emulator.rpm \
+    && dnf clean all \
+    && rm -f /tmp/aws-emulator.rpm \
+    && mkdir -p /home/emulator && chown 1000 /home/emulator
+USER 1000
+#ENV HOME=/home/emulator
+#EXPOSE 9297
+#ENTRYPOINT ["aws-emulator", "-b", "0.0.0.0"]
+#
+#
+#export AWS_ENDPOINT_URL=https://127.0.0.1:9297 AWS_CA_BUNDLE=~/.aws/emulator/9297/ca.pem \
+#  AWS_SHARED_CREDENTIALS_FILE=~/.aws/emulator/9297/emulator_credentials AWS_CONFIG_FILE=~/.aws/emulator/9297/config
+#aws sts get-caller-identity   # "Account": "000000000000"
