@@ -1,0 +1,1 @@
+Place Kubernetes YAML files in this directory. Compose mounts it read-only at `/manifests` inside LocalEmu. Apply them with `docker exec -it localemu kubectl apply -f /manifests` after the EKS cluster is ready.

@@ -1,6 +1,0 @@
-[default]
-region = us-east-1
-endpoint_url = https://127.0.0.1:9297
-ca_bundle = ~/.aws/emulator/9297/ca.pem
-s3 =
-  signature_version = s3v4

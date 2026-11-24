@@ -1,0 +1,23 @@
+services:
+  localemu:
+    build:
+      context: ..
+      dockerfile: aws-emulator/Dockerfile
+    image: paymetv/localemu:local
+    container_name: localemu
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      PERSISTENCE: "1"
+      EKS_K8S_PROVIDER: k3d
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - localemu-data:/var/lib/localemu
+      - ./manifests:/manifests:ro
+      - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  localemu-data:
